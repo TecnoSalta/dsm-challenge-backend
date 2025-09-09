@@ -1,0 +1,6 @@
+services:
+  pwc.challenge.api:
+    image: ${DOCKER_REGISTRY-}pwcchallengeapi
+    build:
+      context: .
+      dockerfile: PWC.Challenge.Api/Dockerfile
