@@ -13,6 +13,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PWC.Challenge.Api/PWC.Challenge.Api.csproj", "PWC.Challenge.Api/"]
+COPY ["PWC.Challenge.Application/PWC.Challenge.Application.csproj", "PWC.Challenge.Application/"]
+COPY ["PWC.Challenge.Common/PWC.Challenge.Common.csproj", "PWC.Challenge.Common/"]
+COPY ["PWC.Challenge.Domain/PWC.Challenge.Domain.csproj", "PWC.Challenge.Domain/"]
+COPY ["PWC.Challenge.Infrastructure/PWC.Challenge.Infrastructure.csproj", "PWC.Challenge.Infrastructure/"]
 RUN dotnet restore "./PWC.Challenge.Api/PWC.Challenge.Api.csproj"
 COPY . .
 WORKDIR "/src/PWC.Challenge.Api"
