@@ -1,34 +1,37 @@
+﻿using System.Text.Json.Serialization;
+using System.Text.Json;
+using PWC.Challenge.Infrastructure;
+using PWC.Challenge.Application;
+using PWC.Challenge.Api;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// Configuraci�n global de JsonSerializerOptions
+var jsonSerializerOptions = new JsonSerializerOptions
+{
+    ReferenceHandler = ReferenceHandler.IgnoreCycles
+};
+
+builder.Services.AddSingleton(jsonSerializerOptions);
+builder.Services
+    .AddInfrastructureServices(builder.Configuration, builder.Environment)
+    .AddApplicationServices(builder.Configuration)
+    .AddApiServices(builder.Configuration, builder.Environment);
+
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-app.UseHttpsRedirection();
+app.UseApiServices(builder.Configuration, builder.Environment);
 
-var summaries = new[]
+if (app.Environment.IsDevelopment())
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
+    //TODO
+    //await app.ApplyDatabaseMigrationsAsync();
+}
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
