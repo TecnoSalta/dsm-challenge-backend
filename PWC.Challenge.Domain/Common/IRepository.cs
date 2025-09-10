@@ -1,11 +1,7 @@
 ﻿
 using System.Linq.Expressions;
-
 namespace PWC.Challenge.Domain.Common;
-
-
-
-public interface IRepository<T> where T : IAggregateRoot
+public interface IRepository<T> 
 {
     IUnitOfWork UnitOfWork { get; }
 

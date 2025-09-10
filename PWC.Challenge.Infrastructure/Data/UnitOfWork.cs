@@ -23,15 +23,12 @@ public class UnitOfWork : IUnitOfWork
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         // Dispatch Domain Events collection.
-        await DispatchDomainEventsAsync();
 
         return await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> SaveEntitiesAsync(CancellationToken cancellationToken = default)
     {
-        // Dispatch Domain Events collection.
-        await DispatchDomainEventsAsync();
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -80,23 +77,5 @@ public class UnitOfWork : IUnitOfWork
             }
         }
     }
-
-    private async Task DispatchDomainEventsAsync()
-    {
-        var domainEntities = _context.ChangeTracker
-            .Entries<Entity>()
-            .Where(x => x.Entity.DomainEvents != null && x.Entity.DomainEvents.Any())
-            .ToList();
-
-        var domainEvents = domainEntities
-            .SelectMany(x => x.Entity.DomainEvents)
-            .ToList();
-
-        domainEntities.ForEach(entity => entity.Entity.ClearDomainEvents());
-
-        foreach (var domainEvent in domainEvents)
-        {
-            await _mediator.Publish(domainEvent);
-        }
-    }
+   
 }

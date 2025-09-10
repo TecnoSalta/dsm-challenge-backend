@@ -22,12 +22,6 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .IsRequired()
             .HasMaxLength(500);
 
-        builder.Property(c => c.RegistrationDate)
-            .IsRequired();
-
-        // Índice único para IdentityId
-        builder.HasIndex(c => c.IdentityId)
-            .IsUnique();
 
     }
 }

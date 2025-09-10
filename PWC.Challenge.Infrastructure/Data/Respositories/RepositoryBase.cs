@@ -7,7 +7,7 @@ namespace PWC.Challenge.Infrastructure.Data.Respositories;
 
 
 
-public abstract class RepositoryBase<T> : IRepository<T> where T : class, IAggregateRoot
+public abstract class RepositoryBase<T> : IRepository<T> where T : class
 {
     protected readonly DbContext _context;
     protected readonly DbSet<T> _dbSet;
