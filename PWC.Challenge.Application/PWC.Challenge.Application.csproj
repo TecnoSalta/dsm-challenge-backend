@@ -15,5 +15,9 @@
     <ProjectReference Include="..\PWC.Challenge.Common\PWC.Challenge.Common.csproj" />
     <ProjectReference Include="..\PWC.Challenge.Domain\PWC.Challenge.Domain.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Features\Customers\Queries\" />
+  </ItemGroup>
 
 </Project>
