@@ -9,6 +9,7 @@ using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Infrastructure.Data;
+using PWC.Challenge.Infrastructure.Data.Common;
 using PWC.Challenge.Infrastructure.Data.Respositories;
 using System.Diagnostics;
 using System.Reflection;
@@ -72,14 +73,14 @@ public static class DependencyInjection
 
     private static IServiceCollection AddRepositories(this IServiceCollection services, Assembly domainAssembly, Assembly infrastructureAssembly)
     {
-        services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
+        services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
         // Registro todos los servicios que implementan IEntityRepository y IAggregateRepository
 
         var repositoryInterfaces = domainAssembly.GetExportedTypes()
             .Where(t => t.IsInterface && !t.IsGenericTypeDefinition &&
                         (t.GetInterfaces().Any(i => i.IsGenericType &&
-                            (i.GetGenericTypeDefinition() == typeof(IRepository<>) ))))
+                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>) ))))
             .ToList();
 
         var repositoryImplementations = infrastructureAssembly.GetExportedTypes()

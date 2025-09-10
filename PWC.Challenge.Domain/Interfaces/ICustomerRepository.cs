@@ -5,6 +5,6 @@ using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Domain.Interfaces;
 
-public interface ICustomerRepository : IRepository<Customer>
+public interface ICustomerRepository : IBaseRepository<Customer>
 {
 }

@@ -2,9 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.DependencyInjection;
-using PWC.Challenge.Infrastructure.Data;
 
-namespace WT.Ticketing.Infrastructure.Persistence.Extensions;
+namespace PWC.Challenge.Infrastructure.Data.Extensions;
 
 public static class PersistenceExtensions
 {
