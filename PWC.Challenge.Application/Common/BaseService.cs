@@ -18,7 +18,7 @@ public class BaseService<TEntity, TEntityDto> : Service<TEntity, TEntityDto>, IB
     {
         var entity = entityDto.Adapt<TEntity>();
         await Repository.AddAsync(entity, saveChanges, cancellationToken);
-        return entityDto;
+        return entity.Adapt<TEntityDto>();
     }
 
     public virtual async Task<TEntity> AddAsync(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)

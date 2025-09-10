@@ -14,11 +14,11 @@ public class CreateCustomerCommandHandler(ICustomerService service) : ICommandHa
         {
             CustomerDto? entityDto;
                 
-            entityDto = await service.GetByIdAsync(command.Customer.Id, true, cancellationToken);
+            entityDto = await service.GetByIdAsync(command.CustomerDto.Id, true, cancellationToken);
             if (entityDto is not null)
-                throw new EntityAlreadyExistsException<Guid>(typeof(Customer).Name, command.Customer.Id);
+                throw new EntityAlreadyExistsException<Guid>(typeof(Customer).Name, command.CustomerDto.Id);
             
-            entityDto = await service.AddAsync(command.Customer, true, cancellationToken);
+            entityDto = await service.AddAsync(command.CustomerDto, true, cancellationToken);
             return entityDto.Id;
         }
         catch (Exception ex)

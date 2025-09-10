@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using PWC.Challenge.Common.Exceptions.Handlers;
 using System.Text.Json.Serialization;
 
 namespace PWC.Challenge.Api;
@@ -14,8 +15,7 @@ public static class DependencyInjection
         var dbConnectionString = configuration.GetConnectionString("CADENATODO");
         var redisConnectionString = configuration.GetConnectionString("Redis");
 
-        //TODO
-        //services.AddExceptionHandler<CustomExceptionHandler>();
+        services.AddExceptionHandler<CustomExceptionHandler>();
         //TODO
      
         //services.AddCors(configuration);

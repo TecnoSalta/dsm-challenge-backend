@@ -7,12 +7,12 @@ namespace PWC.Challenge.Application.Features.Customers.Commands.CreateCustomer
         public CreateCustomerCommandValidator()
         {
 
-            RuleFor(c => c.Customer.FullName)
+            RuleFor(c => c.CustomerDto.FullName)
                 .NotEmpty()
                     .WithMessage("FullName is required.")
                     .WithState(_ => "errors.fullNameRequired");
 
-            RuleFor(c => c.Customer.Address)
+            RuleFor(c => c.CustomerDto.Address)
                 .NotEmpty()
                     .WithMessage("Address is required.")
                     .WithState(_ => "errors.addressRequired");

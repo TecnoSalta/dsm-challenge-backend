@@ -3,5 +3,5 @@ using PWC.Challenge.Common.CQRS;
 
 namespace PWC.Challenge.Application.Features.Customers.Commands.CreateCustomer
 {
-    public record CreateCustomerCommand(CustomerDto Customer) : ICommand<Guid>;
+    public record CreateCustomerCommand(CustomerDto CustomerDto) : ICommand<Guid>;
 }
