@@ -4,14 +4,11 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
-using PWC.Challenge.Infrastructure.Data.Respositories;
-using System.Diagnostics;
 using System.Reflection;
 namespace PWC.Challenge.Infrastructure;
 
