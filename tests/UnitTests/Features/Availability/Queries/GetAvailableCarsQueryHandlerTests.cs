@@ -27,9 +27,11 @@ public class GetAvailableCarsQueryHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
 
         var carId = Guid.NewGuid();
-        var car = new Car(carId, "Toyota", "Corolla", "unavailable");
-        car.CreatedAt = DateTime.UtcNow;
-        car.CreatedBy = "test";
+        var car = new Car(carId, "Toyota", "Corolla", "unavailable")
+        {
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "test"
+        };
         ctx.Cars.Add(car);
         
         await ctx.SaveChangesAsync();
