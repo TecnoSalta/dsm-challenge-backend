@@ -1,4 +1,3 @@
-using PWC.Challenge.Domain.Cars;
 using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Domain.Rentals;

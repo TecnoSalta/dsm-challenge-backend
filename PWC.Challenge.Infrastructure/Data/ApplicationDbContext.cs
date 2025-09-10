@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PWC.Challenge.Domain.Cars;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Infrastructure.Data.Extensions;

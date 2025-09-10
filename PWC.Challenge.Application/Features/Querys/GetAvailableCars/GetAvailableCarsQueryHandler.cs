@@ -2,13 +2,12 @@
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Common.CQRS;
 using PWC.Challenge.Common.Extensions;
-using PWC.Challenge.Domain.Cars;
 using PWC.Challenge.Domain.Common;
-using PWC.Challenge.Domain.Rentals;
+using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Application.Features.Querys.GetAvailableCars
 {
-    internal sealed class GetAvailableCarsQueryHandler
+    public class GetAvailableCarsQueryHandler
     : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
     {
         private readonly IBaseRepository<Car> _carRepo;

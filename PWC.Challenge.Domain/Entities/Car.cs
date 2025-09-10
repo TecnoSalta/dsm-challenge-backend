@@ -1,33 +1,32 @@
 using PWC.Challenge.Domain.Common;
-using PWC.Challenge.Domain.Entities;
 
-namespace PWC.Challenge.Domain.Cars;
+namespace PWC.Challenge.Domain.Entities;
 
-public class Car:Entity
+public class Car : Entity
 {
-    public Guid Id { get; private set; }
-    public string Type { get; private set; }
-    public string Model { get; private set; }
-    public List<Service> Services { get; private set; }
-    //Todo hacer enumerado
-    public string Status { get; set; } ="available";
+    // Propiedades públicas que EF puede rellenar
+    public Guid Id { get; private init; } = default!;
+    public string Type { get; private set; } = default!;
+    public string Model { get; private set; } = default!;
+    public string Status { get; private set; } = "available";
+    public List<Service> Services { get; private set; } = new();
 
-    public static readonly Guid Car1Id = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    // ctor sin parámetros para EF
+    private Car() { }
 
-    public static readonly Guid Car2Id = Guid.Parse("11111111-1111-1111-1111-111111111112");
-
-    public static readonly Guid Car3Id = Guid.Parse("11111111-1111-1111-1111-111111111113");
-
-    public Car(Guid id, string type, string model)
+    // ctor de dominio para tu código
+    public Car(Guid id, string type, string model, string status = "available")
     {
         Id = id;
         Type = type ?? throw new ArgumentNullException(nameof(type));
         Model = model ?? throw new ArgumentNullException(nameof(model));
-        Services = new List<Service>();
+        Status = status;
     }
 
+    public static readonly Guid Car1Id = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid Car2Id = Guid.Parse("11111111-1111-1111-1111-111111111112");
+    public static readonly Guid Car3Id = Guid.Parse("11111111-1111-1111-1111-111111111113");
+
     public void ScheduleService(DateOnly date)
-    {
-        Services.Add(new Service(date));
-    }
+        => Services.Add(new Service(date));
 }
