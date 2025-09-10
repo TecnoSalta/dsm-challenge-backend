@@ -1,14 +1,29 @@
 services:
+  pwc.challenge.db:
+    container_name: pwc.challenge.db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=PWChallenge
+    ports:
+      - "9432:5432"
+    restart: always
+    
   pwc.challenge.api:
+    container_name: pwc.challenge.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
-    ports:
-      - "8080"
-      - "8081"
+      - ConnectionStrings__ApplicationDbContext=Server=pwc.challenge.db;Port=5432;Database=PWChallenge;User Id=postgres;Password=postgres;Include Error Detail=true;
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - pwc.challenge.db
+    ports:
+      - "9080:8080"
+      - "9081:8081"
+    restart: always
