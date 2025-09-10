@@ -7,9 +7,9 @@ using PWC.Challenge.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
-// Configuraci�n global de JsonSerializerOptions
 var jsonSerializerOptions = new JsonSerializerOptions
 {
     ReferenceHandler = ReferenceHandler.IgnoreCycles
