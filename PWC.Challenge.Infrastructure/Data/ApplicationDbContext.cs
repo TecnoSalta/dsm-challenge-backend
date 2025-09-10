@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Service> Services => Set<Service>();
+    public DbSet<Rental> Rentals => Set<Rental>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var assembly = Assembly.GetExecutingAssembly();

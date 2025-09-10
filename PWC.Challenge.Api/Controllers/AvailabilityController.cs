@@ -1,13 +1,10 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using PWC.Challenge.Application.Common;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Features.Querys.GetAvailableCars;
-using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Api.Controllers;
 
-// PWC.Challenge.Api\Controllers\AvailabilityController.cs
 [Route("api/[controller]")]
 public class AvailabilityController(
     ILogger<AvailabilityController> logger,
@@ -16,7 +13,11 @@ public class AvailabilityController(
 
     private readonly ISender sender = sender;
 
-    [HttpGet]
+    /// <summary>
+    /// Consultar coches disponibles para un rango de fechas
+    /// </summary>
+    [HttpGet("disponibilidad")]
+    [ProducesResponseType(typeof(IReadOnlyList<AvailableCarDto>), 200)]
     public async Task<IActionResult> GetAvailableCars(
         [FromQuery] AvailabilityQueryDto filter,
         CancellationToken ct)
@@ -25,5 +26,3 @@ public class AvailabilityController(
         return Ok(result);
     }
 }
-
-
