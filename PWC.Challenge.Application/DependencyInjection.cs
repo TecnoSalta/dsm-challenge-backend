@@ -26,7 +26,6 @@ public static class DependencyInjection
 
         services.AddMapster(applicationAssembly);
 
-        //services.AddAutoMapper(assembly);
 
         services.AddServices(applicationAssembly);
 
