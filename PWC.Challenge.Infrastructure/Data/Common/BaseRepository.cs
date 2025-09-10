@@ -192,6 +192,11 @@ public class BaseRepository<TEntity> : Repository, IBaseRepository<TEntity>
         return entity;
     }
 
+
+
+    public IQueryable<TEntity> Query()
+       => Context.Set<TEntity>().AsNoTracking();
+
     public virtual async Task<TEntity> UpdateAsync(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
     {
         Context.Set<TEntity>().Update(entity);

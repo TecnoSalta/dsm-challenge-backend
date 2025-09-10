@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PWC.Challenge.Domain.Cars;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Infrastructure.Data.Extensions;
@@ -17,6 +18,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Customer> Customers => Set<Customer>();
 
+    public DbSet<Car> Cars => Set<Car>();
+    public DbSet<Service> Services => Set<Service>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var assembly = Assembly.GetExecutingAssembly();
