@@ -1,5 +1,6 @@
 ﻿using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Extensions;
@@ -63,8 +64,15 @@ public class BaseRepository<TEntity> : Repository, IBaseRepository<TEntity>
             await SaveChangesAsync(cancellationToken);
     }
 
-    
-    
+    public virtual async Task DeleteAsync(Guid id, bool saveChanges = true, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetByIdAsync(id, true, cancellationToken);
+        if (entity is null)
+            throw new EntityNotFoundException<Guid>(nameof(entity), id);
+        Context.Set<TEntity>().Remove(entity);
+        if (saveChanges)
+            await SaveChangesAsync(cancellationToken);
+    }
 
 
     public virtual async Task DeleteRangeAsync(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default)
@@ -111,8 +119,16 @@ public class BaseRepository<TEntity> : Repository, IBaseRepository<TEntity>
         return entities;
     }
 
-   
-   
+    public virtual async Task<TEntity?> GetByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default)
+    {
+        var entity = await Context.Set<TEntity>()
+            .AsNoTrackingIf(asNoTracking)
+            .SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
+        return entity;
+    }
+
+  
+
     public virtual async Task<TEntity?> GetFirstAsync(
         Expression<Func<TEntity, bool>> where,
         Func<IQueryable<TEntity>, IQueryable<TEntity>>? includes = null,

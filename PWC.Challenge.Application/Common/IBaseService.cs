@@ -23,4 +23,8 @@ public interface IBaseService<TEntity, TEntityDto> : IService<TEntity, TEntityDt
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<TEntityDto> UpdateAsync(TEntityDto entityDto, bool saveChanges = true, CancellationToken cancellationToken = default);
     Task<TEntity> UpdateAsync(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, bool saveChanges = true, CancellationToken cancellationToken = default);
+    Task<TEntity?> FindByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default);
+    Task<TEntityDto?> GetByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default);
+
 }

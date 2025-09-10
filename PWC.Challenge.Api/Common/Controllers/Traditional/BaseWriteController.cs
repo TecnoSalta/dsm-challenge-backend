@@ -37,4 +37,6 @@ public abstract class BaseWriteController<TEntity, TEntityDto> : BaseReadControl
         var result = await this.service.UpdateAsync(entity, true, CancellationToken.None);
         return Ok(result);
     }
+
+
 }

@@ -65,9 +65,11 @@ public class BaseService<TEntity, TEntityDto> : Service<TEntity, TEntityDto>, IB
         await Repository.DeleteAsync(entity, saveChanges, cancellationToken);
     }
 
-   
-
-  
+    
+    public virtual async Task DeleteAsync(Guid id, bool saveChanges = true, CancellationToken cancellationToken = default)
+    {
+        await Repository.DeleteAsync(id, saveChanges, cancellationToken);
+    }
 
     public virtual async Task DeleteRangeAsync(IEnumerable<TEntityDto> entityDtos, bool saveChanges = true, CancellationToken cancellationToken = default)
     {
@@ -81,8 +83,11 @@ public class BaseService<TEntity, TEntityDto> : Service<TEntity, TEntityDto>, IB
         return exists;
     }
 
-   
-    
+    public virtual async Task<TEntity?> FindByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default)
+    {
+        var entity = await Repository.GetByIdAsync(id, asNoTracking, cancellationToken);
+        return entity;
+    }
 
     public virtual async Task<IEnumerable<TEntityDto>> GetAllAsync(bool asNoTracking = false, CancellationToken cancellationToken = default)
     {
@@ -102,6 +107,13 @@ public class BaseService<TEntity, TEntityDto> : Service<TEntity, TEntityDto>, IB
         return entityDtos;
     }
 
+
+    public virtual async Task<TEntityDto?> GetByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default)
+    {
+        var entity = await Repository.GetByIdAsync(id, asNoTracking, cancellationToken);
+        var entityDto = entity.Adapt<TEntityDto>();
+        return entityDto;
+    }
     public virtual async Task<TEntityDto> UpdateAsync(TEntityDto entityDto, bool saveChanges = true, CancellationToken cancellationToken = default)
     {
         var entity = entityDto.Adapt<TEntity>();

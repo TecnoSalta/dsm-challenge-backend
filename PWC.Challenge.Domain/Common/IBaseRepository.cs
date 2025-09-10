@@ -21,4 +21,8 @@ public interface IBaseRepository<TEntity> : IRepository
     Task<TEntity?> GetLastAsync(Expression<Func<TEntity, bool>> where, Func<IQueryable<TEntity>, IQueryable<TEntity>>? includes = null, bool asNoTracking = false, CancellationToken cancellationToken = default);
     Task<TEntity?> GetSingleAsync(Expression<Func<TEntity, bool>> where, Func<IQueryable<TEntity>, IQueryable<TEntity>>? includes = null, bool asNoTracking = false, CancellationToken cancellationToken = default);
     Task<TEntity> UpdateAsync(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
+    Task<TEntity?> GetByIdAsync(Guid id, bool asNoTracking = false, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, bool saveChanges = true, CancellationToken cancellationToken = default);
+
+
 }

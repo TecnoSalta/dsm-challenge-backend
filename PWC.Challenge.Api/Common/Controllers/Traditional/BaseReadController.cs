@@ -39,7 +39,8 @@ public abstract class BaseReadController<TEntity, TEntityDto> : ControllerBase, 
     [HttpGet("{id}")]
     public virtual async Task<IActionResult> GetByIdAsync(Guid id)
     {
-        return Ok();
+        var response = await service.GetByIdAsync(id,true, CancellationToken.None);
+        return Ok(response);
     }
 
 }
