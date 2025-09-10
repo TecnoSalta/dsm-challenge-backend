@@ -1,6 +1,5 @@
 ﻿using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace PWC.Challenge.Infrastructure.Data.Respositories;
