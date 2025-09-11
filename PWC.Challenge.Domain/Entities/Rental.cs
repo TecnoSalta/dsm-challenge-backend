@@ -17,7 +17,6 @@ public class Rental : Entity
     // Constructor vacío protegido para EF
     protected Rental() { }
 
-    // Constructor rico para dominio
     public Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate)
     {
         if (startDate > endDate)
@@ -39,7 +38,6 @@ public class Rental : Entity
             throw new InvalidOperationException("Only active rentals can be cancelled.");
 
         Status = RentalStatus.Cancelled;
-        // Aquí podrías disparar un Domain Event: RentalCancelledEvent
     }
 
     // Actualizar fechas y/o coche
@@ -57,6 +55,5 @@ public class Rental : Entity
             CarId = newCar.Id;
         }
 
-        // Aquí podrías disparar un Domain Event: RentalUpdatedEvent
     }
 }

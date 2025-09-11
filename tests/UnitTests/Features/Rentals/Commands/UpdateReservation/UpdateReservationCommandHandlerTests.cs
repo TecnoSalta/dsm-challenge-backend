@@ -1,15 +1,17 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation;
+using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation.Services;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
 
-namespace PWC.Challenge.Application.Tests.Features.Rentals.Commands.UpdateReservation;
+namespace UnitTests.Features.Rentals.Commands.UpdateReservation;
 
 public class UpdateReservationCommandHandlerTests
 {
@@ -26,7 +28,6 @@ public class UpdateReservationCommandHandlerTests
         entity.UpdatedAt = DateTime.UtcNow;
         return entity;
     }
-
     [Fact]
     public async Task Handle_WhenDatesChangeAndCarIsFree_ShouldUpdate()
     {
@@ -34,17 +35,19 @@ public class UpdateReservationCommandHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
+
         var customer = new Customer(
-                Guid.NewGuid(),
-                fullName: "Test User",
-                address: "123 Test St"
-            )
+            Guid.NewGuid(),
+            fullName: "Test User",
+            address: "123 Test St"
+        )
         {
             CreatedBy = "test",
             CreatedAt = DateTime.UtcNow,
             UpdatedBy = "test",
             UpdatedAt = DateTime.UtcNow
         };
+
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
@@ -57,10 +60,11 @@ public class UpdateReservationCommandHandlerTests
         )));
         await ctx.SaveChangesAsync();
 
-        var handler = new UpdateReservationCommandHandler(
-            new BaseRepository<Rental>(ctx),
-            new BaseRepository<Car>(ctx)
-        );
+        var rentalRepo = new BaseRepository<Rental>(ctx);
+        var carRepo = new BaseRepository<Car>(ctx);
+        var rentalService = new RentalService(rentalRepo, carRepo);
+
+        var handler = new UpdateReservationCommandHandler(rentalService);
 
         var cmd = new UpdateReservationCommand(
             rentalId,
@@ -81,6 +85,9 @@ public class UpdateReservationCommandHandlerTests
         result.Message.Should().Be("Reservation updated successfully.");
     }
 
+
+
+
     [Fact]
     public async Task Handle_WhenCarIsNotAvailable_ShouldThrowBusinessException()
     {
@@ -89,7 +96,6 @@ public class UpdateReservationCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        // Customer principal de la reserva que vamos a modificar
         var customer = new Customer(
             Guid.NewGuid(),
             fullName: "Test User",
@@ -102,9 +108,7 @@ public class UpdateReservationCommandHandlerTests
             UpdatedAt = DateTime.UtcNow
         };
 
-        // Coche que se va a reservar
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
-
         ctx.Cars.Add(WithAudit(car));
 
         var otherCustomer = new Customer(
@@ -122,7 +126,7 @@ public class UpdateReservationCommandHandlerTests
         // Reserva ocupando el coche en el intervalo objetivo
         ctx.Rentals.Add(WithAudit(new Rental(
             Guid.NewGuid(),
-            otherCustomer, // ahora un Customer completo
+            otherCustomer,
             car,
             new DateOnly(2025, 10, 6),
             new DateOnly(2025, 10, 10)
@@ -137,13 +141,13 @@ public class UpdateReservationCommandHandlerTests
             new DateOnly(2025, 10, 5)
         )));
 
-        // Guardamos todo en InMemoryDatabase
         await ctx.SaveChangesAsync();
 
-        var handler = new UpdateReservationCommandHandler(
-            new BaseRepository<Rental>(ctx),
-            new BaseRepository<Car>(ctx)
-        );
+        var rentalRepo = new BaseRepository<Rental>(ctx);
+        var carRepo = new BaseRepository<Car>(ctx);
+
+        var rentalService = new RentalService(rentalRepo, carRepo);
+        var handler = new UpdateReservationCommandHandler(rentalService);
 
         var cmd = new UpdateReservationCommand(
             rentalId,
@@ -155,7 +159,6 @@ public class UpdateReservationCommandHandlerTests
         );
 
         // Act & Assert
-        // Ahora EF no falla porque todos los Customer tienen FullName y Address
         await Assert.ThrowsAsync<BusinessException>(
             () => handler.Handle(cmd, CancellationToken.None)
         );
@@ -170,7 +173,6 @@ public class UpdateReservationCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        // Customer completo para EF Core (propiedades requeridas)
         var customer = new Customer(
             Guid.NewGuid(),
             fullName: "Test User",
@@ -183,12 +185,9 @@ public class UpdateReservationCommandHandlerTests
             UpdatedAt = DateTime.UtcNow
         };
 
-        // Coche disponible
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
-
-        // Reserva inicial
         ctx.Rentals.Add(WithAudit(new Rental(
             rentalId,
             customer,
@@ -199,14 +198,16 @@ public class UpdateReservationCommandHandlerTests
 
         await ctx.SaveChangesAsync();
 
+        // cancelar la reserva
         var rental = await ctx.Rentals.FirstAsync(r => r.Id == rentalId);
-        rental.Cancel(); // Cambia status a Cancelled
+        rental.Cancel();
         await ctx.SaveChangesAsync();
 
-        var handler = new UpdateReservationCommandHandler(
-            new BaseRepository<Rental>(ctx),
-            new BaseRepository<Car>(ctx)
-        );
+        var rentalRepo = new BaseRepository<Rental>(ctx);
+        var carRepo = new BaseRepository<Car>(ctx);
+
+        var rentalService = new RentalService(rentalRepo, carRepo);
+        var handler = new UpdateReservationCommandHandler(rentalService);
 
         var cmd = new UpdateReservationCommand(
             rentalId,
@@ -218,11 +219,10 @@ public class UpdateReservationCommandHandlerTests
         );
 
         // Act & Assert
-        // EF ya no falla porque Customer tiene FullName y Address
-        // Se lanza BusinessException porque rental no está activo
         await Assert.ThrowsAsync<BusinessException>(
             () => handler.Handle(cmd, CancellationToken.None)
         );
     }
+
 
 }
