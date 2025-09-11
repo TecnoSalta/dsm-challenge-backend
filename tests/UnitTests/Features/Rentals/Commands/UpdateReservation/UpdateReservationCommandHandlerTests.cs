@@ -34,17 +34,27 @@ public class UpdateReservationCommandHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
-
-        ctx.Cars.Add(WithAudit(new Car(carId, "Compact", "Mini", CarStatus.Available)));
-        ctx.Rentals.Add(WithAudit(new Rental
+        var customer = new Customer(
+                Guid.NewGuid(),
+                fullName: "Test User",
+                address: "123 Test St"
+            )
         {
-            Id = rentalId,
-            CarId = carId,
-            CustomerId = Guid.NewGuid(),
-            StartDate = new DateOnly(2025, 10, 1),
-            EndDate = new DateOnly(2025, 10, 5),
-            Status = RentalStatus.Active
-        }));
+            CreatedBy = "test",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedBy = "test",
+            UpdatedAt = DateTime.UtcNow
+        };
+        var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
+
+        ctx.Cars.Add(WithAudit(car));
+        ctx.Rentals.Add(WithAudit(new Rental(
+            rentalId,
+            customer,
+            car,
+            new DateOnly(2025, 10, 1),
+            new DateOnly(2025, 10, 5)
+        )));
         await ctx.SaveChangesAsync();
 
         var handler = new UpdateReservationCommandHandler(
@@ -55,9 +65,11 @@ public class UpdateReservationCommandHandlerTests
         var cmd = new UpdateReservationCommand(
             rentalId,
             new UpdateReservationDto(
-                new DateOnly(2025, 10, 1),  // Fecha simplificada
-                new DateOnly(2025, 10, 10), // Nueva fecha de fin
-                null));
+                new DateOnly(2025, 10, 1),
+                new DateOnly(2025, 10, 10),
+                null
+            )
+        );
 
         // Act
         var result = await handler.Handle(cmd, CancellationToken.None);
@@ -65,7 +77,7 @@ public class UpdateReservationCommandHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.StartDate.Should().Be(new DateOnly(2025, 10, 1));
-        result.EndDate.Should().Be(new DateOnly(2025, 10, 10)); // Corregido para que coincida con el comando
+        result.EndDate.Should().Be(new DateOnly(2025, 10, 10));
         result.Message.Should().Be("Reservation updated successfully.");
     }
 
@@ -77,47 +89,78 @@ public class UpdateReservationCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        ctx.Cars.Add(WithAudit(new Car(carId, "Compact", "Mini", CarStatus.Available)));
-
-        // Ocupamos el coche en el intervalo objetivo
-        ctx.Rentals.Add(WithAudit(new Rental
+        // Customer principal de la reserva que vamos a modificar
+        var customer = new Customer(
+            Guid.NewGuid(),
+            fullName: "Test User",
+            address: "123 Test St"
+        )
         {
-            Id = Guid.NewGuid(),
-            CarId = carId,
-            CustomerId = Guid.NewGuid(),
-            StartDate = DateOnly.FromDateTime(new DateTime(2025, 10, 6, 0, 0, 0, DateTimeKind.Utc)),
-            EndDate = DateOnly.FromDateTime(new DateTime(2025, 10, 10, 0, 0, 0, DateTimeKind.Utc)),
-            Status = RentalStatus.Active
-        }));
+            CreatedBy = "test",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedBy = "test",
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Coche que se va a reservar
+        var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
+
+        ctx.Cars.Add(WithAudit(car));
+
+        var otherCustomer = new Customer(
+            Guid.NewGuid(),
+            fullName: "Other User",
+            address: "456 Test Ave"
+        )
+        {
+            CreatedBy = "test",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedBy = "test",
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Reserva ocupando el coche en el intervalo objetivo
+        ctx.Rentals.Add(WithAudit(new Rental(
+            Guid.NewGuid(),
+            otherCustomer, // ahora un Customer completo
+            car,
+            new DateOnly(2025, 10, 6),
+            new DateOnly(2025, 10, 10)
+        )));
 
         // Nuestra reserva a modificar
-        ctx.Rentals.Add(WithAudit(new Rental
-        {
-            Id = rentalId,
-            CarId = carId,
-            CustomerId = Guid.NewGuid(),
-            StartDate = DateOnly.FromDateTime(new DateTime(2025, 10, 1, 0, 0, 0, DateTimeKind.Utc)),
-            EndDate = DateOnly.FromDateTime(new DateTime(2025, 10, 5, 0, 0, 0, DateTimeKind.Utc)),
-            Status = RentalStatus.Active
-        }));
+        ctx.Rentals.Add(WithAudit(new Rental(
+            rentalId,
+            customer,
+            car,
+            new DateOnly(2025, 10, 1),
+            new DateOnly(2025, 10, 5)
+        )));
+
+        // Guardamos todo en InMemoryDatabase
         await ctx.SaveChangesAsync();
 
         var handler = new UpdateReservationCommandHandler(
             new BaseRepository<Rental>(ctx),
             new BaseRepository<Car>(ctx)
-           );
+        );
 
         var cmd = new UpdateReservationCommand(
             rentalId,
             new UpdateReservationDto(
-                DateOnly.FromDateTime(new DateTime(2025, 10, 6, 0, 0, 0, DateTimeKind.Utc)), // solapa
-                DateOnly.FromDateTime(new DateTime(2025, 10, 8, 0, 0, 0, DateTimeKind.Utc)),
-                null));
+                new DateOnly(2025, 10, 6), // solapa con otra reserva
+                new DateOnly(2025, 10, 8),
+                null
+            )
+        );
 
         // Act & Assert
+        // Ahora EF no falla porque todos los Customer tienen FullName y Address
         await Assert.ThrowsAsync<BusinessException>(
-            () => handler.Handle(cmd, CancellationToken.None));
+            () => handler.Handle(cmd, CancellationToken.None)
+        );
     }
+
 
     [Fact]
     public async Task Handle_WhenRentalIsNotActive_ShouldThrowBusinessException()
@@ -127,33 +170,59 @@ public class UpdateReservationCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        ctx.Cars.Add(WithAudit(new Car(carId, "Compact", "Mini", CarStatus.Available)));
-
-        ctx.Rentals.Add(WithAudit(new Rental
+        // Customer completo para EF Core (propiedades requeridas)
+        var customer = new Customer(
+            Guid.NewGuid(),
+            fullName: "Test User",
+            address: "123 Test St"
+        )
         {
-            Id = rentalId,
-            CarId = carId,
-            CustomerId = Guid.NewGuid(),
-            StartDate = DateOnly.FromDateTime(new DateTime(2025, 10, 1, 0, 0, 0, DateTimeKind.Utc)),
-            EndDate = DateOnly.FromDateTime(new DateTime(2025, 10, 5, 0, 0, 0, DateTimeKind.Utc)),
-            Status = RentalStatus.Cancelled // ❌ no activa
-        }));
+            CreatedBy = "test",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedBy = "test",
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Coche disponible
+        var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
+
+        ctx.Cars.Add(WithAudit(car));
+
+        // Reserva inicial
+        ctx.Rentals.Add(WithAudit(new Rental(
+            rentalId,
+            customer,
+            car,
+            new DateOnly(2025, 10, 1),
+            new DateOnly(2025, 10, 5)
+        )));
+
+        await ctx.SaveChangesAsync();
+
+        var rental = await ctx.Rentals.FirstAsync(r => r.Id == rentalId);
+        rental.Cancel(); // Cambia status a Cancelled
         await ctx.SaveChangesAsync();
 
         var handler = new UpdateReservationCommandHandler(
             new BaseRepository<Rental>(ctx),
             new BaseRepository<Car>(ctx)
-            );
+        );
 
         var cmd = new UpdateReservationCommand(
             rentalId,
             new UpdateReservationDto(
-                    DateOnly.FromDateTime(new DateTime(2025, 10, 1, 0, 0, 0, DateTimeKind.Utc)),
-                    DateOnly.FromDateTime(new DateTime(2025, 10, 5, 0, 0, 0, DateTimeKind.Utc)),
-                null));
+                new DateOnly(2025, 10, 1),
+                new DateOnly(2025, 10, 5),
+                null
+            )
+        );
 
         // Act & Assert
+        // EF ya no falla porque Customer tiene FullName y Address
+        // Se lanza BusinessException porque rental no está activo
         await Assert.ThrowsAsync<BusinessException>(
-            () => handler.Handle(cmd, CancellationToken.None));
+            () => handler.Handle(cmd, CancellationToken.None)
+        );
     }
+
 }
