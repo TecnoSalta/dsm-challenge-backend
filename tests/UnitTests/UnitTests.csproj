@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\PWC.Challenge.Application\PWC.Challenge.Application.csproj" />
     <ProjectReference Include="..\..\PWC.Challenge.Infrastructure\PWC.Challenge.Infrastructure.csproj" />
   </ItemGroup>
 

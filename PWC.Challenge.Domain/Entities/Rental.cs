@@ -17,7 +17,7 @@ public class Rental: Entity
     public Car Car { get;  set; } = default!;
 
     // ctor vacío para EF
-    private Rental() { }
+    public Rental() { }
 
     // ctor escalar que EF también puede usar
     private Rental(Guid id, Guid customerId, Guid carId, DateOnly startDate, DateOnly endDate)

@@ -6,7 +6,7 @@
 public record UpdatedReservationDto(
     Guid ReservationId,
     Guid CarId,
-    DateTimeOffset StartDate,
-    DateTimeOffset EndDate,
+    DateOnly StartDate,
+    DateOnly EndDate,
     string Message
 );

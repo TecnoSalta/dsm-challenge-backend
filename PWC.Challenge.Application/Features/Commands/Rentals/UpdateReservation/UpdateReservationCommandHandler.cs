@@ -10,7 +10,7 @@ using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation;
 
-internal sealed class UpdateReservationCommandHandler
+public class UpdateReservationCommandHandler
     : ICommandHandler<UpdateReservationCommand, UpdatedReservationDto>
 {
     private readonly IBaseRepository<Rental> _rentalRepo;
@@ -24,6 +24,8 @@ internal sealed class UpdateReservationCommandHandler
         _rentalRepo = rentalRepo;
         _carRepo = carRepo;
     }
+
+   
 
     public async Task<UpdatedReservationDto> Handle(
         UpdateReservationCommand cmd,
