@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PWC.Challenge.Application.Dtos.Rentals;
+using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 
 namespace PWC.Challenge.Api.Controllers;
@@ -33,5 +34,22 @@ public class RentalsController : ControllerBase
         var command = new UpdateRentalCommand(id, dto);
         var response = await sender.Send(command, ct);
         return Ok(response);
+    }
+
+
+    /// <summary>
+    /// CU-05 – Cancelar reserva activa
+    /// </summary>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> CancelRental(
+        [FromRoute] Guid id,
+        CancellationToken ct)
+    {
+        var command = new CancelRentalCommand(id);
+        await sender.Send(command, ct);
+        return NoContent();
     }
 }

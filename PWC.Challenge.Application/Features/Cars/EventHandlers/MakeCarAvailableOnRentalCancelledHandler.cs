@@ -22,7 +22,7 @@ namespace PWC.Challenge.Application.Features.Cars.EventHandlers
 
             car.MarkAsAvailable();
 
-            await _carRepository.UpdateAsync(car, false,cancellationToken);
+            await _carRepository.UpdateAsync(car, true,cancellationToken);
         }
     }
 }

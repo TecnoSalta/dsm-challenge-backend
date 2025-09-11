@@ -19,6 +19,21 @@ public class RentalService : IRentalService
         _carRepo = carRepo;
     }
 
+    public async Task<CancelledRentalDto> CancelRentalAsync(Guid rentalId, CancellationToken ct)
+    {
+        var rental = await _rentalRepo.QueryTracking()
+                                      .FirstOrDefaultAsync(r => r.Id == rentalId, ct)
+                   ?? throw new NotFoundException("Rental not found.");
+
+        if (rental.Status != RentalStatus.Active)
+            throw new BusinessException("Only active rentals can be cancelled.", string.Empty);
+
+        rental.Cancel();   // tu método de dominio que pone Status = Cancelled y fecha
+
+        await _rentalRepo.UpdateAsync(rental, true, ct); // true -> SaveChanges
+        return new CancelledRentalDto(rental.Id, rental.Status.ToString());
+    }
+
     public async Task<UpdatedRentalDto> UpdateRentalAsync(
         Guid rentalId,
         DateOnly? newStart,
@@ -32,7 +47,7 @@ public class RentalService : IRentalService
                      ?? throw new NotFoundException("Rental not found.");
 
         if (rental.Status != RentalStatus.Active)
-            throw new BusinessException("Only active rentals can be modified.", "");
+            throw new BusinessException("Only active rentals can be modified.", string.Empty);
 
         var startDate = newStart ?? rental.StartDate;
         var endDate = newEnd ?? rental.EndDate;
@@ -54,7 +69,7 @@ public class RentalService : IRentalService
                           r.EndDate > startDate, ct);
 
         if (occupied)
-            throw new BusinessException("Car is not available in the requested interval.", "");
+            throw new BusinessException("Car is not available in the requested interval.", string.Empty);
 
         // Usamos el método de dominio para mantener lógica encapsulada
         rental.UpdateRental(startDate, endDate, newCar);

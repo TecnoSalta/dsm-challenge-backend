@@ -18,11 +18,8 @@ public class CancelRentalCommandHandler
     public async Task<CancelRentalDto> Handle(CancelRentalCommand request, CancellationToken cancellationToken)
     {
         // Delegamos toda la lógica de negocio al service
-        var updatedRental = await _rentalService.UpdateRentalAsync(
-            request.ReservationId,
-            request.Payload.NewStartDate,
-            request.Payload.NewEndDate,
-            request.Payload.NewCarId,
+        var updatedRental = await _rentalService.CancelRentalAsync(
+            request.RentalId,
             cancellationToken
         );
 

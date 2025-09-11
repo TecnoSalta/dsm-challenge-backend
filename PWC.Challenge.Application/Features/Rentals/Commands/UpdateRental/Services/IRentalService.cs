@@ -10,4 +10,8 @@ public interface IRentalService
         DateOnly? newEnd,
         Guid? newCarId,
         CancellationToken ct);
+
+    Task<CancelledRentalDto> CancelRentalAsync(
+      Guid rentalId,
+      CancellationToken ct);
 }
