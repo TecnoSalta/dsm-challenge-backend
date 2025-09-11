@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Infrastructure.Data.Seeding;
 
@@ -14,7 +15,7 @@ public class CarSeed : ISeedData
 
         var fooCar = new Car(
             Car.Car1Id,
-            "camioneta", "Hilux", "available"
+            "camioneta", "Hilux", CarStatus.Available
         )
         {
             CreatedAt = createdAt,
@@ -22,7 +23,7 @@ public class CarSeed : ISeedData
         };
         var fooCar2 = new Car(
            Car.Car2Id,
-           "auto", "Explorer", "available"
+           "auto", "Explorer", CarStatus.Available
        )
         {
             CreatedAt = createdAt,
@@ -30,7 +31,7 @@ public class CarSeed : ISeedData
         };
         var fooCar3 = new Car(
            Car.Car3Id,
-           "auto", "Mini", "unavailable"
+           "auto", "Mini", CarStatus.Available
        )
         {
             CreatedAt = createdAt,

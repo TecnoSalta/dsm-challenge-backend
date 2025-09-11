@@ -4,6 +4,7 @@ using PWC.Challenge.Common.CQRS;
 using PWC.Challenge.Common.Extensions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Application.Features.Querys.GetAvailableCars
 {
@@ -28,7 +29,7 @@ namespace PWC.Challenge.Application.Features.Querys.GetAvailableCars
 
             // 1. Coches activos
             var carsQ = _carRepo.Query()
-                        .Where(c => c.Status == "available");
+                        .Where(c => c.Status ==CarStatus.Available);
 
            
             var available = await carsQ

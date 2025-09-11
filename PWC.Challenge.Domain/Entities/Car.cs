@@ -1,21 +1,22 @@
 using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Domain.Entities;
 
 public class Car : Entity
 {
     // Propiedades públicas que EF puede rellenar
-    public Guid Id { get; private init; } = default!;
-    public string Type { get; private set; } = default!;
-    public string Model { get; private set; } = default!;
-    public string Status { get; private set; } = "available";
-    public List<Service> Services { get; private set; } = new();
+    public Guid Id { get;  init; } = default!;
+    public string Type { get;  set; } = default!;
+    public string Model { get;  set; } = default!;
+    public CarStatus Status { get;  set; } = CarStatus.Available;
+    public List<Service> Services { get;  set; } = new();
 
     // ctor sin parámetros para EF
     private Car() { }
 
     // ctor de dominio para tu código
-    public Car(Guid id, string type, string model, string status = "available")
+    public Car(Guid id, string type, string model, CarStatus status = CarStatus.Available)
     {
         Id = id;
         Type = type ?? throw new ArgumentNullException(nameof(type));

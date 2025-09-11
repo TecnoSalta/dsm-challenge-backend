@@ -22,6 +22,10 @@
   <ItemGroup>
     <ProjectReference Include="..\PWC.Challenge.Application\PWC.Challenge.Application.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Migrations\" />
+  </ItemGroup>
   
   
   

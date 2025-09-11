@@ -6,6 +6,7 @@ public interface IBaseRepository<TEntity> : IRepository
     where TEntity : IEntity
 {
     IQueryable<TEntity> Query();
+    IQueryable<TEntity> QueryTracking();
     Task<TEntity> AddAsync(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default);
     Task BulkAddAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);

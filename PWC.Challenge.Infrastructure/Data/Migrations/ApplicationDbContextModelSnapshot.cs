@@ -23,7 +23,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("PWC.Challenge.Domain.Cars.Car", b =>
+            modelBuilder.Entity("PWC.Challenge.Domain.Entities.Car", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -49,9 +49,8 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -75,7 +74,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                             CreatedBy = "Anonymous",
                             IsDeleted = false,
                             Model = "Hilux",
-                            Status = "available",
+                            Status = 1,
                             Type = "camioneta"
                         },
                         new
@@ -85,7 +84,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                             CreatedBy = "Anonymous",
                             IsDeleted = false,
                             Model = "Explorer",
-                            Status = "available",
+                            Status = 1,
                             Type = "auto"
                         },
                         new
@@ -95,7 +94,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                             CreatedBy = "Anonymous",
                             IsDeleted = false,
                             Model = "Mini",
-                            Status = "available",
+                            Status = 1,
                             Type = "auto"
                         });
                 });
@@ -154,6 +153,72 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PWC.Challenge.Domain.Entities.Rental", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("Rentals");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222221"),
+                            CarId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedBy = "Anonymous",
+                            CustomerId = new Guid("ef1112d6-3447-49e7-8783-7d18d67cd073"),
+                            EndDate = new DateOnly(2025, 1, 15),
+                            IsDeleted = false,
+                            StartDate = new DateOnly(2025, 1, 1),
+                            Status = 0
+                        });
+                });
+
             modelBuilder.Entity("PWC.Challenge.Domain.Entities.Service", b =>
                 {
                     b.Property<Guid>("Id")
@@ -195,14 +260,33 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                     b.ToTable("Services");
                 });
 
+            modelBuilder.Entity("PWC.Challenge.Domain.Entities.Rental", b =>
+                {
+                    b.HasOne("PWC.Challenge.Domain.Entities.Car", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PWC.Challenge.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("PWC.Challenge.Domain.Entities.Service", b =>
                 {
-                    b.HasOne("PWC.Challenge.Domain.Cars.Car", null)
+                    b.HasOne("PWC.Challenge.Domain.Entities.Car", null)
                         .WithMany("Services")
                         .HasForeignKey("CarId");
                 });
 
-            modelBuilder.Entity("PWC.Challenge.Domain.Cars.Car", b =>
+            modelBuilder.Entity("PWC.Challenge.Domain.Entities.Car", b =>
                 {
                     b.Navigation("Services");
                 });

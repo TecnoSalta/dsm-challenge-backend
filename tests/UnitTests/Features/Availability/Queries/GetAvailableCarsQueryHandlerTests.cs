@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Features.Querys.GetAvailableCars;
 using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
 
@@ -26,7 +27,7 @@ public class GetAvailableCarsQueryHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
 
         var carId = Guid.NewGuid();
-        var car = new Car(carId, "Toyota", "Corolla", "unavailable")
+        var car = new Car(carId, "Toyota", "Corolla", CarStatus.Rented)
         {
             CreatedAt = DateTime.UtcNow,
             CreatedBy = "test"
@@ -59,7 +60,7 @@ public class GetAvailableCarsQueryHandlerTests
         // Arrange
         await using var ctx = new ApplicationDbContext(NewInMemContext());
         var carId = Guid.NewGuid();
-        var car = new Car(carId, "Toyota", "Corolla", "available")
+        var car = new Car(carId, "Toyota", "Corolla", CarStatus.Available)
         {
             CreatedAt = DateTime.UtcNow,
             CreatedBy = "test"
