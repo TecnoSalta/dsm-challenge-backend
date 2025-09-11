@@ -7,7 +7,7 @@ public sealed class UpdateReservationCommandValidator : AbstractValidator<Update
 {
     public UpdateReservationCommandValidator()
     {
-        RuleFor(x => x.ReservationId).NotEmpty();
+        RuleFor(x => x.RentalId).NotEmpty();
         RuleFor(x => x.Payload).NotNull();
 
         When(x => x.Payload.NewStartDate.HasValue, () =>

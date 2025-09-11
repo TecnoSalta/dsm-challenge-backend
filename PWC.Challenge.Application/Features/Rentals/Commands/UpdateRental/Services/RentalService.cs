@@ -19,7 +19,7 @@ public class RentalService : IRentalService
         _carRepo = carRepo;
     }
 
-    public async Task<UpdatedRentalDto> UpdateReservationAsync(
+    public async Task<UpdatedRentalDto> UpdateRentalAsync(
         Guid rentalId,
         DateOnly? newStart,
         DateOnly? newEnd,
@@ -57,7 +57,7 @@ public class RentalService : IRentalService
             throw new BusinessException("Car is not available in the requested interval.", "");
 
         // Usamos el método de dominio para mantener lógica encapsulada
-        rental.UpdateReservation(startDate, endDate, newCar);
+        rental.UpdateRental(startDate, endDate, newCar);
 
         await _rentalRepo.UpdateAsync(rental, true, ct);
 
@@ -74,7 +74,7 @@ public class RentalService : IRentalService
             rental.CarId,
             rental.StartDate,
             rental.EndDate,
-            "Reservation updated successfully."
+            "Rental updated successfully."
         );
 
         return dto;

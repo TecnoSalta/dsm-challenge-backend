@@ -1,10 +1,10 @@
 ﻿using MediatR;
 using PWC.Challenge.Application.Dtos.Rentals;
-using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 
+// Cambia el tipo de respuesta de IRequestHandler y asegúrate de que CancelRentalCommand implemente IRequest<CancelRentalDto>
 public class CancelRentalCommandHandler
     : IRequestHandler<CancelRentalCommand, CancelRentalDto>
 {
@@ -14,23 +14,18 @@ public class CancelRentalCommandHandler
     {
         _rentalService = rentalService;
     }
-    /// <summary>
-    /// Dada una reserva existente, actualiza sus fechas y/o coche.
-    /// </summary>
-    /// <param name="cmd"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<UpdatedRentalDto> Handle(
-        UpdateRentalCommand cmd,
-        CancellationToken cancellationToken)
+
+    public async Task<CancelRentalDto> Handle(CancelRentalCommand request, CancellationToken cancellationToken)
     {
         // Delegamos toda la lógica de negocio al service
-        return await _rentalService.UpdateRentalAsync(
-            cmd.RentalId,
-            cmd.Payload.NewStartDate,
-            cmd.Payload.NewEndDate,
-            cmd.Payload.NewCarId,
+        var updatedRental = await _rentalService.UpdateRentalAsync(
+            request.ReservationId,
+            request.Payload.NewStartDate,
+            request.Payload.NewEndDate,
+            request.Payload.NewCarId,
             cancellationToken
         );
+
+        return new CancelRentalDto(updatedRental.RentalId);
     }
 }

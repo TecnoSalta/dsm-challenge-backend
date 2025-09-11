@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PWC.Challenge.Application.Dtos;
-using PWC.Challenge.Application.Features.Querys.GetAvailableCars;
+using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;
 
 namespace PWC.Challenge.Api.Controllers;
 

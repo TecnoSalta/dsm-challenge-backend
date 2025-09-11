@@ -16,13 +16,13 @@ namespace PWC.Challenge.Application.Features.Cars.EventHandlers
 
         public async Task Handle(RentalCancelledDomainEvent notification, CancellationToken cancellationToken)
         {
-            var car = await _carRepository.GetByIdAsync(notification.CarId, cancellationToken);
+            var car = await _carRepository.GetByIdAsync(notification.CarId, false ,cancellationToken);
             if (car == null)
                 throw new InvalidOperationException("Car not found.");
 
             car.MarkAsAvailable();
 
-            await _carRepository.UpdateAsync(car, cancellationToken);
+            await _carRepository.UpdateAsync(car, false,cancellationToken);
         }
     }
 }

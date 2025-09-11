@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos;
-using PWC.Challenge.Application.Features.Querys.GetAvailableCars;
+using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;

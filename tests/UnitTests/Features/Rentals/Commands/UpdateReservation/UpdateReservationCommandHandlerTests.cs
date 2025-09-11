@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
-using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 using PWC.Challenge.Domain.Common;

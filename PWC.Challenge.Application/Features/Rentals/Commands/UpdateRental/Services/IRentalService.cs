@@ -4,7 +4,7 @@ namespace PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Servi
 
 public interface IRentalService
 {
-    Task<UpdatedRentalDto> UpdateReservationAsync(
+    Task<UpdatedRentalDto> UpdateRentalAsync(
         Guid rentalId,
         DateOnly? newStart,
         DateOnly? newEnd,
