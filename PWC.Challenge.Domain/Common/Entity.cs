@@ -1,20 +1,25 @@
 ﻿namespace PWC.Challenge.Domain.Common;
-
 public abstract class Entity : IEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    public DateTime CreatedAt { get; set; } = default!;
-
+    public DateTime CreatedAt { get; set; }
     public string CreatedBy { get; set; } = default!;
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+    public DateTime? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
+    public bool IsDeleted { get; set; }
 
-    public DateTime? UpdatedAt { get; set; } = default!;
+    private readonly List<IDomainEvent> _domainEvents = new();
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    public string? UpdatedBy { get; set; } = default!;
+    protected void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
 
-    public DateTime? DeletedAt { get; set; } = default!;
+    public void ClearDomainEvents() => _domainEvents.Clear();
+}
 
-    public string? DeletedBy { get; set; } = default!;
-
-    public bool IsDeleted { get; set; } = default!;
+public abstract class AggregateRoot : Entity
+{
+    // Solo sirve para marcar que esta entidad es "root"
 }

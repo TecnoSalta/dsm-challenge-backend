@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PWC.Challenge.Application.Dtos.Rentals;
-using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation;
+using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -22,15 +22,15 @@ public class RentalsController : ControllerBase
     //CU-04 – Modificar reserva activa
     /// </summary>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(UpdatedReservationDto), 200)]
+    [ProducesResponseType(typeof(UpdatedRentalDto), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> UpdateReservation(
+    public async Task<IActionResult> UpdateRental(
         [FromRoute] Guid id,
-        [FromBody] UpdateReservationDto dto,
+        [FromBody] UpdateRentalDto dto,
         CancellationToken ct)
     {
-        var command = new UpdateReservationCommand(id, dto);
+        var command = new UpdateRentalCommand(id, dto);
         var response = await sender.Send(command, ct);
         return Ok(response);
     }

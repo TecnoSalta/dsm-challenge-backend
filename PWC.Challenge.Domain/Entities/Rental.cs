@@ -1,9 +1,10 @@
+using Domain.Rentals;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Domain.Entities;
 
-public class Rental : Entity
+public class Rental : AggregateRoot
 {
     public Guid CustomerId { get; private set; }
     public Guid CarId { get; private set; }
@@ -38,10 +39,13 @@ public class Rental : Entity
             throw new InvalidOperationException("Only active rentals can be cancelled.");
 
         Status = RentalStatus.Cancelled;
+
+        AddDomainEvent(new RentalCancelledDomainEvent(this.Id, this.CarId));
     }
 
     // Actualizar fechas y/o coche
-    public void UpdateReservation(DateOnly newStart, DateOnly newEnd, Car? newCar = null)
+    // TODO: mejorar las reglas de negocio y agregar tests
+    public void UpdateRental(DateOnly newStart, DateOnly newEnd, Car? newCar = null)
     {
         if (newStart > newEnd)
             throw new ArgumentException("StartDate cannot be after EndDate.");
@@ -54,6 +58,5 @@ public class Rental : Entity
             Car = newCar;
             CarId = newCar.Id;
         }
-
     }
 }

@@ -3,7 +3,7 @@ using System.Text.Json;
 using PWC.Challenge.Infrastructure;
 using PWC.Challenge.Application;
 using PWC.Challenge.Api;
-using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation.Services;
+using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);

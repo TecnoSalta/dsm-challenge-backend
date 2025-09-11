@@ -3,17 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
-using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation;
-using PWC.Challenge.Application.Features.Commands.Rentals.UpdateReservation.Services;
+using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
+using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
+using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
 
-namespace UnitTests.Features.Rentals.Commands.UpdateReservation;
+namespace UnitTests.Features.Rentals.Commands.UpdateRental;
 
-public class UpdateReservationCommandHandlerTests
+public class UpdateRentalCommandHandlerTests
 {
     private static DbContextOptions<ApplicationDbContext> NewInMemContext()
         => new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -64,11 +65,11 @@ public class UpdateReservationCommandHandlerTests
         var carRepo = new BaseRepository<Car>(ctx);
         var rentalService = new RentalService(rentalRepo, carRepo);
 
-        var handler = new UpdateReservationCommandHandler(rentalService);
+        var handler = new UpdateRentalCommandHandler(rentalService);
 
-        var cmd = new UpdateReservationCommand(
+        var cmd = new UpdateRentalCommand(
             rentalId,
-            new UpdateReservationDto(
+            new UpdateRentalDto(
                 new DateOnly(2025, 10, 1),
                 new DateOnly(2025, 10, 10),
                 null
@@ -82,7 +83,7 @@ public class UpdateReservationCommandHandlerTests
         result.Should().NotBeNull();
         result.StartDate.Should().Be(new DateOnly(2025, 10, 1));
         result.EndDate.Should().Be(new DateOnly(2025, 10, 10));
-        result.Message.Should().Be("Reservation updated successfully.");
+        result.Message.Should().Be("Rental updated successfully.");
     }
 
 
@@ -147,11 +148,11 @@ public class UpdateReservationCommandHandlerTests
         var carRepo = new BaseRepository<Car>(ctx);
 
         var rentalService = new RentalService(rentalRepo, carRepo);
-        var handler = new UpdateReservationCommandHandler(rentalService);
+        var handler = new UpdateRentalCommandHandler(rentalService);
 
-        var cmd = new UpdateReservationCommand(
+        var cmd = new UpdateRentalCommand(
             rentalId,
-            new UpdateReservationDto(
+            new UpdateRentalDto(
                 new DateOnly(2025, 10, 6), // solapa con otra reserva
                 new DateOnly(2025, 10, 8),
                 null
@@ -207,11 +208,11 @@ public class UpdateReservationCommandHandlerTests
         var carRepo = new BaseRepository<Car>(ctx);
 
         var rentalService = new RentalService(rentalRepo, carRepo);
-        var handler = new UpdateReservationCommandHandler(rentalService);
+        var handler = new UpdateRentalCommandHandler(rentalService);
 
-        var cmd = new UpdateReservationCommand(
+        var cmd = new UpdateRentalCommand(
             rentalId,
-            new UpdateReservationDto(
+            new UpdateRentalDto(
                 new DateOnly(2025, 10, 1),
                 new DateOnly(2025, 10, 5),
                 null

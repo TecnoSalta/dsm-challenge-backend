@@ -4,5 +4,6 @@ public enum CarStatus
 {
     Rented,
     Available,
-    Inactive
+    Inactive,
+    InMaintenance
 }
