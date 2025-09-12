@@ -55,5 +55,18 @@ namespace PWC.Challenge.Infrastructure.Services
             }
             return Task.CompletedTask;
         }
+        public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+        {
+            var cachedValue = await GetAsync<T>(key, cancellationToken);
+            if (cachedValue != null)
+            {
+                return cachedValue;
+            }
+
+            var value = await factory();
+            await SetAsync(key, value, expiration, cancellationToken);
+
+            return value;
+        }
     }
 }

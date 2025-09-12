@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain;
 using PWC.Challenge.Domain.Common;
@@ -145,7 +146,9 @@ public static class DependencyInjection
                 sp.GetRequiredService<IServiceRepository>());
 
             var cacheService = sp.GetRequiredService<ICacheService>();
-            return new CachedAvailabilityService(originalService, cacheService);
+            var logger = sp.GetRequiredService<ILogger<CachedAvailabilityService>>(); // Agregar esta línea
+
+            return new CachedAvailabilityService(originalService, cacheService, logger); // Pasar el logger
         });
 
         return services;

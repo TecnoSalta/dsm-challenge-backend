@@ -1,11 +1,11 @@
-﻿using PWC.Challenge.Application.Dtos;
+﻿using Microsoft.Extensions.Logging;
+using PWC.Challenge.Application.Dtos;
+using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Common.CQRS;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Domain.Services;
-using Microsoft.Extensions.Logging;
-using PWC.Challenge.Application.Interfaces;
 
 namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 {
@@ -33,18 +33,26 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
             // Generar clave de cache
             var cacheKey = GenerateCacheKey(startDate, endDate, carType, model);
 
-            // Intentar obtener del cache
-            var cachedResult = await _cacheService.GetAsync<IReadOnlyList<AvailableCarDto>>(cacheKey, ct);
-            if (cachedResult != null)
+            try
             {
-                _logger.LogDebug("Cache hit for available cars: {CacheKey}", cacheKey);
-                return cachedResult;
+                // Intentar obtener del cache
+                var cachedResult = await _cacheService.GetAsync<IReadOnlyList<AvailableCarDto>>(cacheKey, ct);
+                if (cachedResult != null)
+                {
+                    _logger.LogDebug("Cache hit for available cars: {CacheKey}", cacheKey);
+                    return cachedResult;
+                }
+
+                _logger.LogDebug("Cache miss for available cars: {CacheKey}", cacheKey);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error accessing cache for key: {CacheKey}, falling back to database", cacheKey);
+                // Continuar con la consulta a la base de datos si el cache falla
             }
 
-            _logger.LogDebug("Cache miss for available cars: {CacheKey}", cacheKey);
-
-            // Obtener todos los autos activos
-            var allCars = await _carRepository.GetAllAsync();
+            // Si no está en cache o el cache falló, obtener de la base de datos
+            var allCars = await _carRepository.GetAllAsync(cancellationToken: ct);
             var availableCars = new List<Car>();
 
             foreach (var car in allCars)
@@ -55,7 +63,7 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 
                 // Verificar disponibilidad completa
                 var isAvailable = await _availabilityService.IsCarAvailableAsync(
-                    car.Id, startDate, endDate, ct);
+                    car.Id, startDate, endDate);
 
                 if (isAvailable)
                 {
@@ -67,8 +75,16 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
                 .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate))
                 .ToList();
 
-            // Guardar en cache con expiración de 30 segundos
-            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromSeconds(30), ct);
+            try
+            {
+                // Intentar guardar en cache con expiración de 30 segundos
+                await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromSeconds(30), ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error saving to cache for key: {CacheKey}", cacheKey);
+                // No lanzar excepción, solo loggear el error
+            }
 
             return result;
         }

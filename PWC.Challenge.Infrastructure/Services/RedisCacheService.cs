@@ -121,5 +121,36 @@ namespace PWC.Challenge.Infrastructure.Services
                 _logger.LogWarning(ex, "Error removing cache by pattern: {Pattern}", pattern);
             }
         }
+
+        public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Intentar obtener del cache primero
+                var cachedValue = await GetAsync<T>(key, cancellationToken);
+                if (cachedValue != null)
+                {
+                    _logger.LogDebug("Cache hit for GetOrCreate: {Key}", key);
+                    return cachedValue;
+                }
+
+                _logger.LogDebug("Cache miss for GetOrCreate: {Key}", key);
+
+                // Si no está en cache, ejecutar la factory function
+                var value = await factory();
+
+                // Guardar en cache
+                await SetAsync(key, value, expiration, cancellationToken);
+
+                return value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error in GetOrCreateAsync for key: {Key}", key);
+
+                // Si hay error, ejecutar la factory function como fallback
+                return await factory();
+            }
+        }
     }
 }
