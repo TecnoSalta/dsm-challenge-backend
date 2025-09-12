@@ -97,7 +97,7 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
             throw new BusinessException("Car is not available in the requested interval.", string.Empty);
 
         // Usamos el método de dominio para mantener lógica encapsulada
-        rental.UpdateRental(startDate, endDate, newCar);
+        rental.UpdateRentalDates(startDate, endDate);
 
         await _rentalRepo.UpdateAsync(rental, true, ct);
 

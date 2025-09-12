@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PWC.Challenge.Application.Features.Cars.EventHandlers;
@@ -8,10 +7,8 @@ using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
-using PWC.Challenge.Domain.Rentals;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
-using Xunit;
 
 namespace UnitTests.Features.Rentals.Commands.CancelRental;
 
@@ -70,7 +67,7 @@ public class CancelRentalCommandHandlerIntegrationTests
             customer,
             car,
             new DateOnly(2025, 10, 1),
-            new DateOnly(2025, 10, 5)
+            new DateOnly(2025, 10, 5),40
         )));
         await ctx.SaveChangesAsync();
 

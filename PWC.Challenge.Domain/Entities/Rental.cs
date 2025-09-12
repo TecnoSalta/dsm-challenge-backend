@@ -146,8 +146,8 @@ public class Rental : AggregateRoot
 
             var lateFee = lateDays * lateFeePerDay;
             TotalCost += lateFee;
-
-            AddDomainEvent(new LateFeeAppliedDomainEvent(Id, lateDays, lateFee));
+            //TODO: Implementar handlers y resto de logica de esta parte.
+            //AddDomainEvent(new LateFeeAppliedDomainEvent(Id, lateDays, lateFee));
         }
     }
 

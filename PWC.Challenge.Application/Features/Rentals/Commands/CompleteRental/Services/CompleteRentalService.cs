@@ -5,7 +5,7 @@ using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
-using PWC.Challenge.Domain.Rentals;
+using PWC.Challenge.Domain.Events.Rentals;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental.Services;
 
@@ -66,9 +66,9 @@ public class CompleteRentalService : ICompleteRentalService
         await _rentalRepo.UpdateAsync(rental, true, cancellationToken);
         await _carRepo.UpdateAsync(rental.Car!, true, cancellationToken);
         // 3) Emitir evento de dominio
-        rental.AddDomainEvent(new RentalCompletedDomainEvent(rental.Id, rental.Car.Id, today));
+        rental.AddDomainEvent(new RentalCompletedDomainEvent(rental.Id, rental.Car.Id, rental.CustomerId,today));
 
-        await _mediator.Publish(new RentalCompletedDomainEvent(rental.Id, rental.Car.Id, today), cancellationToken);
+        await _mediator.Publish(new RentalCompletedDomainEvent(rental.Id, rental.Car.Id,rental.CustomerId, today), cancellationToken);
         return new CompletedRentalDto(rentalId);
         
     }

@@ -59,7 +59,7 @@ public class UpdateRentalCommandHandlerTests
         ctx.Cars.Add(WithAudit(car));
         ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
                                              new DateOnly(2025, 10, 1),
-                                             new DateOnly(2025, 10, 5))));
+                                             new DateOnly(2025, 10, 5),40)));
         await ctx.SaveChangesAsync();
 
         var rentalService = CreateRentalService(ctx);
@@ -100,11 +100,11 @@ public class UpdateRentalCommandHandlerTests
         var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave");
         ctx.Rentals.Add(WithAudit(new Rental(Guid.NewGuid(), otherCustomer, car,
                                              new DateOnly(2025, 10, 6),
-                                             new DateOnly(2025, 10, 10))));
+                                             new DateOnly(2025, 10, 10),40)));
 
         ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
                                              new DateOnly(2025, 10, 1),
-                                             new DateOnly(2025, 10, 5))));
+                                             new DateOnly(2025, 10, 5),40)));
         await ctx.SaveChangesAsync();
 
         var rentalService = CreateRentalService(ctx);
@@ -140,7 +140,7 @@ public class UpdateRentalCommandHandlerTests
         ctx.Cars.Add(WithAudit(car));
         var rentalEntity = WithAudit(new Rental(rentalId, customer, car,
                                                 new DateOnly(2025, 10, 1),
-                                                new DateOnly(2025, 10, 5)));
+                                                new DateOnly(2025, 10, 5),40));
         ctx.Rentals.Add(rentalEntity);
         await ctx.SaveChangesAsync();
 
