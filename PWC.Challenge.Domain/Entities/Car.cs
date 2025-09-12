@@ -11,16 +11,21 @@ public class Car : AggregateRoot
     public CarStatus Status { get; private set; } = CarStatus.Available;
     public IReadOnlyList<Service> Services => _services.AsReadOnly();
     private readonly List<Service> _services = new();
+    public decimal DailyRate
+    {
+        get; private set;
+    }
 
     // Constructor protegido para EF
     protected Car() { }
 
     // Constructor de dominio
-    public Car(Guid id, string type, string model, CarStatus status = CarStatus.Available)
+    public Car(Guid id, string type, string model, decimal dailyRate, CarStatus status = CarStatus.Available)
     {
         Id = id;
         Type = type ?? throw new ArgumentNullException(nameof(type));
         Model = model ?? throw new ArgumentNullException(nameof(model));
+        DailyRate = dailyRate;
         Status = status;
     }
 
@@ -30,12 +35,12 @@ public class Car : AggregateRoot
     public static readonly Guid Car3Id = Guid.Parse("11111111-1111-1111-1111-111111111113");
 
     // Comportamientos de dominio
-    public void ScheduleService(DateOnly date)
+    public void ScheduleService(DateOnly date, int durationDays = 2)
     {
-        if (_services.Any(s => s.Date == date))
-            throw new InvalidOperationException("Service already scheduled on this date.");
+        if (_services.Any(s => s.OverlapsWith(date, date.AddDays(durationDays))))
+            throw new InvalidOperationException("Service overlaps with existing service.");
 
-        _services.Add(new Service(date));
+        _services.Add(new Service(date, Id, durationDays));
     }
 
     public void MarkAsRented()

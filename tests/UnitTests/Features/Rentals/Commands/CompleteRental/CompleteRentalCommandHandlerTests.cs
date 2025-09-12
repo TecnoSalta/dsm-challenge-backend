@@ -56,7 +56,7 @@ public class CompleteRentalCommandHandlerTests
         var carId = Guid.NewGuid();
 
         var customer = WithAudit(new Customer(Guid.NewGuid(), "User", "456 Other St"));
-        var car = WithAudit(new Car(carId, "SUV", "Honda", CarStatus.Available));
+        var car = WithAudit(new Car(carId, "SUV", "Honda", 100, CarStatus.Available));
 
         var rental = WithAudit(new Rental(rentalId, customer, car,
                                           new DateOnly(2025, 9, 1),

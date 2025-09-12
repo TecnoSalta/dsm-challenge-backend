@@ -15,7 +15,7 @@ public class CarSeed : ISeedData
 
         var fooCar = new Car(
             Car.Car1Id,
-            "camioneta", "Hilux", CarStatus.Available
+            "camioneta", "Hilux", 100,CarStatus.Available
         )
         {
             CreatedAt = createdAt,
@@ -23,7 +23,7 @@ public class CarSeed : ISeedData
         };
         var fooCar2 = new Car(
            Car.Car2Id,
-           "auto", "Explorer", CarStatus.Available
+           "auto", "Explorer",100, CarStatus.Available
        )
         {
             CreatedAt = createdAt,
@@ -31,7 +31,7 @@ public class CarSeed : ISeedData
         };
         var fooCar3 = new Car(
            Car.Car3Id,
-           "auto", "Mini", CarStatus.Available
+           "auto", "Mini",100, CarStatus.Available
        )
         {
             CreatedAt = createdAt,

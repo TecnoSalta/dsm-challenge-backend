@@ -59,7 +59,7 @@ public class CancelRentalCommandHandlerIntegrationTests
         var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
         customer = WithAudit(customer);
 
-        var car = new Car(carId, "Compact", "Mini", CarStatus.Rented);
+        var car = new Car(carId, "Compact", "Mini", 100,CarStatus.Rented);
 
         ctx.Cars.Add(WithAudit(car));
         ctx.Rentals.Add(WithAudit(new Rental(

@@ -1,7 +1,8 @@
 ﻿namespace PWC.Challenge.Application.Dtos;
+
 public record AvailabilityQueryDto(
-    DateTime PickingTime,
-    DateTime ReturnDatte,
-    string? CarType,      // opcional
-    string? Model          // opcional
+    DateOnly StartDate,
+    DateOnly EndDate,
+    string? CarType = null,
+    string? Model = null
 );

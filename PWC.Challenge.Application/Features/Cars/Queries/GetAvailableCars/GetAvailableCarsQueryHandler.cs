@@ -1,47 +1,39 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PWC.Challenge.Application.Dtos;
+﻿using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Common.CQRS;
-using PWC.Challenge.Common.Extensions;
-using PWC.Challenge.Domain.Common;
-using PWC.Challenge.Domain.Entities;
-using PWC.Challenge.Domain.Enums;
+using PWC.Challenge.Domain.Interfaces;
 
 namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 {
     public class GetAvailableCarsQueryHandler
-    : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
+        : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
     {
-        private readonly IBaseRepository<Car> _carRepo;
-        //TODO private readonly IRepository<Rental> _rentalRepo;
-        //TODO private readonly IRepository<Service> _serviceRepo;
+        private readonly ICarRepository _carRepository;
 
-        public GetAvailableCarsQueryHandler(
-            IBaseRepository<Car> carRepo)
+        public GetAvailableCarsQueryHandler(ICarRepository carRepository)
         {
-            _carRepo = carRepo;
+            _carRepository = carRepository;
         }
 
         public async Task<IReadOnlyList<AvailableCarDto>> Handle(
             GetAvailableCarsQuery request,
             CancellationToken ct)
         {
-            var (pickup, returnD, type, model) = request.Filter;
+            var (startDate, endDate, carType, model) = request.Filter;
 
-            // 1. Coches activos
-            var carsQ = _carRepo.Query()
-                        .Where(c => c.Status ==CarStatus.Available);
+            // Validar fechas
+            if (startDate >= endDate)
+                throw new ArgumentException("End date must be after start date");
 
-           
-            var available = await carsQ
-                .WhereIf(!string.IsNullOrWhiteSpace(type), c => c.Type == type)
-                .WhereIf(!string.IsNullOrWhiteSpace(model), c => c.Model.Contains(model))
-                .Select(c => new AvailableCarDto(
-                    c.Id,
-                    c.Type,
-                    c.Model))
-                .ToListAsync(ct);
+            if (endDate.DayNumber - startDate.DayNumber < 1)
+                throw new ArgumentException("Rental period must be at least 1 day");
 
-            return available;
+            // Obtener autos disponibles usando el repositorio especializado
+            var availableCars = await _carRepository.GetAvailableCarsAsync(
+                startDate, endDate, carType, model);
+
+            return availableCars
+                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate))
+                .ToList();
         }
     }
 }

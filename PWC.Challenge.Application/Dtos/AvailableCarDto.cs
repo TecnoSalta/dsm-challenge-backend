@@ -1,7 +1,8 @@
 ﻿namespace PWC.Challenge.Application.Dtos;
 
 public record AvailableCarDto(
-    Guid CarId,
+    Guid Id,
     string Type,
-    string Model
+    string Model,
+    decimal DailyRate
 );

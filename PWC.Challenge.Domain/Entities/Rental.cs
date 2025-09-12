@@ -1,7 +1,6 @@
-using MediatR;
+﻿using MediatR;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
-using PWC.Challenge.Domain.Events;
 using PWC.Challenge.Domain.Events.Rentals;
 using PWC.Challenge.Domain.Exceptions;
 using PWC.Challenge.Domain.ValueObjects;
@@ -43,7 +42,7 @@ public class Rental : AggregateRoot
         EndDate = endDate;
         DailyRate = dailyRate;
         RentalPeriod = RentalPeriod.Create(startDate, endDate);
-        TotalCost = CalculateTotalCost(dailyRate, RentalPeriod.Days);
+        TotalCost = CalculateTotalCost(dailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
         Status = RentalStatus.Confirmed;
 
         AddDomainEvent(new RentalCreatedDomainEvent(Id, CarId, CustomerId, startDate, endDate));
@@ -75,7 +74,7 @@ public class Rental : AggregateRoot
         StartDate = newStartDate;
         EndDate = newEndDate;
         RentalPeriod = RentalPeriod.Create(newStartDate, newEndDate);
-        TotalCost = CalculateTotalCost(DailyRate, RentalPeriod.Days);
+        TotalCost = CalculateTotalCost(DailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
 
         AddDomainEvent(new RentalUpdatedDomainEvent(Id, CarId, newStartDate, newEndDate));
     }
@@ -90,7 +89,7 @@ public class Rental : AggregateRoot
         Car = newCar;
         CarId = newCar.Id;
         DailyRate = newDailyRate;
-        TotalCost = CalculateTotalCost(newDailyRate, RentalPeriod.Days);
+        TotalCost = CalculateTotalCost(newDailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
 
         AddDomainEvent(new RentalCarChangedDomainEvent(Id, CarId, newCar.Id));
     }
@@ -123,12 +122,12 @@ public class Rental : AggregateRoot
         var actualRentalPeriod = RentalPeriod.Create(StartDate, actualReturnDate);
 
         // If the actual rental period differs from the planned period, raise event
-        if (actualRentalPeriod.Days != RentalPeriod.Days)
+        if (actualRentalPeriod.DurationDays != RentalPeriod.DurationDays) // CAMBIADO: Days → DurationDays
         {
-            AddDomainEvent(new RentalPeriodChangedDomainEvent(Id, actualRentalPeriod.Days));
+            AddDomainEvent(new RentalPeriodChangedDomainEvent(Id, actualRentalPeriod.DurationDays)); // CAMBIADO: Days → DurationDays
 
             // Recalculate cost based on actual rental period
-            TotalCost = CalculateTotalCost(DailyRate, actualRentalPeriod.Days);
+            TotalCost = CalculateTotalCost(DailyRate, actualRentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
         }
 
         AddDomainEvent(new RentalCompletedDomainEvent(Id, CarId, CustomerId, actualReturnDate));
