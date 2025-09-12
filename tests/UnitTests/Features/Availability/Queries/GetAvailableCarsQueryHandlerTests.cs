@@ -1,5 +1,4 @@
-﻿// GetAvailableCarsQueryHandlerTests.cs
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;

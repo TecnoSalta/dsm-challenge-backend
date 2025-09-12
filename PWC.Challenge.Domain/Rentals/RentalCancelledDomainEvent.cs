@@ -1,10 +1,10 @@
 ﻿using PWC.Challenge.Domain.Common;
 
-namespace Domain.Rentals
+namespace PWC.Challenge.Domain.Rentals
 {
-    public record RentalCancelledDomainEvent(Guid RentalId, Guid CarId) : IDomainEvent
+    public sealed class RentalCancelledDomainEvent(Guid rentalId, Guid carId) : DomainEvent
     {
-        public Guid EventId { get; } = Guid.NewGuid();
-        public DateTime OccurredOn { get; } = DateTime.UtcNow;
+        public Guid RentalId { get; } = rentalId;
+        public Guid CarId { get; } = carId;
     }
 }

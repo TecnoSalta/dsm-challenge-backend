@@ -1,6 +1,7 @@
-using Domain.Rentals;
+using MediatR;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
+using PWC.Challenge.Domain.Rentals;
 
 namespace PWC.Challenge.Domain.Entities;
 
@@ -33,16 +34,17 @@ public class Rental : AggregateRoot
     }
 
     // Cancelar reserva
-    public void Cancel()
+    public async Task CancelAsync(IMediator mediator)
     {
         if (Status != RentalStatus.Active)
             throw new InvalidOperationException("Only active rentals can be cancelled.");
 
         Status = RentalStatus.Cancelled;
 
-        AddDomainEvent(new RentalCancelledDomainEvent(this.Id, this.CarId));
+        var domEvent = new RentalCancelledDomainEvent(Id, CarId);
+        // Publicar evento usando MediatR
+        await mediator.Publish(domEvent);
     }
-
     // Actualizar fechas y/o coche
     // TODO: mejorar las reglas de negocio y agregar tests
     public void UpdateRental(DateOnly newStart, DateOnly newEnd, Car? newCar = null)

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PWC.Challenge.Application.Common;
 using PWC.Challenge.Application.Mappings.Mapster;
+using PWC.Challenge.Domain.Entities;
 using System.Reflection;
 
 
@@ -16,10 +17,12 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
        var applicationAssembly = typeof(ApplicationAssembly).Assembly;
+        var domainAssembly = typeof(Rental).Assembly; 
+
 
         services.AddMediatR(config =>
         {
-            config.RegisterServicesFromAssembly(applicationAssembly);
+            config.RegisterServicesFromAssemblies(applicationAssembly, domainAssembly);
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);

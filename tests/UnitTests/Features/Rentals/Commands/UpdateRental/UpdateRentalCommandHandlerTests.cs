@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using MediatR;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
@@ -28,6 +29,21 @@ public class UpdateRentalCommandHandlerTests
         entity.UpdatedAt = DateTime.UtcNow;
         return entity;
     }
+
+    private static RentalService CreateRentalService(ApplicationDbContext ctx)
+    {
+        var rentalRepo = new BaseRepository<Rental>(ctx);
+        var carRepo = new BaseRepository<Car>(ctx);
+
+        // Mock de MediatR
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        return new RentalService(rentalRepo, carRepo, mediatorMock.Object);
+    }
+
     [Fact]
     public async Task Handle_WhenDatesChangeAndCarIsFree_ShouldUpdate()
     {
@@ -36,34 +52,17 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(
-            Guid.NewGuid(),
-            fullName: "Test User",
-            address: "123 Test St"
-        )
-        {
-            CreatedBy = "test",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedBy = "test",
-            UpdatedAt = DateTime.UtcNow
-        };
-
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
-        ctx.Rentals.Add(WithAudit(new Rental(
-            rentalId,
-            customer,
-            car,
-            new DateOnly(2025, 10, 1),
-            new DateOnly(2025, 10, 5)
-        )));
+        ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
+                                             new DateOnly(2025, 10, 1),
+                                             new DateOnly(2025, 10, 5))));
         await ctx.SaveChangesAsync();
 
-        var rentalRepo = new BaseRepository<Rental>(ctx);
-        var carRepo = new BaseRepository<Car>(ctx);
-        var rentalService = new RentalService(rentalRepo, carRepo);
-
+        var rentalService = CreateRentalService(ctx);
         var handler = new UpdateRentalCommandHandler(rentalService);
 
         var cmd = new UpdateRentalCommand(
@@ -85,9 +84,6 @@ public class UpdateRentalCommandHandlerTests
         result.Message.Should().Be("Rental updated successfully.");
     }
 
-
-
-
     [Fact]
     public async Task Handle_WhenCarIsNotAvailable_ShouldThrowBusinessException()
     {
@@ -96,63 +92,28 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(
-            Guid.NewGuid(),
-            fullName: "Test User",
-            address: "123 Test St"
-        )
-        {
-            CreatedBy = "test",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedBy = "test",
-            UpdatedAt = DateTime.UtcNow
-        };
-
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
         ctx.Cars.Add(WithAudit(car));
 
-        var otherCustomer = new Customer(
-            Guid.NewGuid(),
-            fullName: "Other User",
-            address: "456 Test Ave"
-        )
-        {
-            CreatedBy = "test",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedBy = "test",
-            UpdatedAt = DateTime.UtcNow
-        };
+        var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave");
+        ctx.Rentals.Add(WithAudit(new Rental(Guid.NewGuid(), otherCustomer, car,
+                                             new DateOnly(2025, 10, 6),
+                                             new DateOnly(2025, 10, 10))));
 
-        // Reserva ocupando el coche en el intervalo objetivo
-        ctx.Rentals.Add(WithAudit(new Rental(
-            Guid.NewGuid(),
-            otherCustomer,
-            car,
-            new DateOnly(2025, 10, 6),
-            new DateOnly(2025, 10, 10)
-        )));
-
-        // Nuestra reserva a modificar
-        ctx.Rentals.Add(WithAudit(new Rental(
-            rentalId,
-            customer,
-            car,
-            new DateOnly(2025, 10, 1),
-            new DateOnly(2025, 10, 5)
-        )));
-
+        ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
+                                             new DateOnly(2025, 10, 1),
+                                             new DateOnly(2025, 10, 5))));
         await ctx.SaveChangesAsync();
 
-        var rentalRepo = new BaseRepository<Rental>(ctx);
-        var carRepo = new BaseRepository<Car>(ctx);
-
-        var rentalService = new RentalService(rentalRepo, carRepo);
+        var rentalService = CreateRentalService(ctx);
         var handler = new UpdateRentalCommandHandler(rentalService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
             new UpdateRentalDto(
-                new DateOnly(2025, 10, 6), // solapa con otra reserva
+                new DateOnly(2025, 10, 6),
                 new DateOnly(2025, 10, 8),
                 null
             )
@@ -164,7 +125,6 @@ public class UpdateRentalCommandHandlerTests
         );
     }
 
-
     [Fact]
     public async Task Handle_WhenRentalIsNotActive_ShouldThrowBusinessException()
     {
@@ -173,40 +133,28 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(
-            Guid.NewGuid(),
-            fullName: "Test User",
-            address: "123 Test St"
-        )
-        {
-            CreatedBy = "test",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedBy = "test",
-            UpdatedAt = DateTime.UtcNow
-        };
-
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
-        ctx.Rentals.Add(WithAudit(new Rental(
-            rentalId,
-            customer,
-            car,
-            new DateOnly(2025, 10, 1),
-            new DateOnly(2025, 10, 5)
-        )));
-
+        var rentalEntity = WithAudit(new Rental(rentalId, customer, car,
+                                                new DateOnly(2025, 10, 1),
+                                                new DateOnly(2025, 10, 5)));
+        ctx.Rentals.Add(rentalEntity);
         await ctx.SaveChangesAsync();
 
-        // cancelar la reserva
-        var rental = await ctx.Rentals.FirstAsync(r => r.Id == rentalId);
-        rental.Cancel();
+        // Cancelamos la reserva usando CancelAsync con MediatR mock
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        await rentalEntity.CancelAsync(mediatorMock.Object);
         await ctx.SaveChangesAsync();
 
-        var rentalRepo = new BaseRepository<Rental>(ctx);
-        var carRepo = new BaseRepository<Car>(ctx);
-
-        var rentalService = new RentalService(rentalRepo, carRepo);
+        var rentalService = new RentalService(new BaseRepository<Rental>(ctx),
+                                              new BaseRepository<Car>(ctx),
+                                              mediatorMock.Object);
         var handler = new UpdateRentalCommandHandler(rentalService);
 
         var cmd = new UpdateRentalCommand(
@@ -223,6 +171,4 @@ public class UpdateRentalCommandHandlerTests
             () => handler.Handle(cmd, CancellationToken.None)
         );
     }
-
-
 }

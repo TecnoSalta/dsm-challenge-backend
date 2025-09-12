@@ -46,8 +46,10 @@ public class Car : AggregateRoot
         Status = CarStatus.Rented;
     }
 
+
     public void MarkAsAvailable()
     {
+        if (Status.Equals(CarStatus.Available)) return;
         Status = CarStatus.Available;
     }
 

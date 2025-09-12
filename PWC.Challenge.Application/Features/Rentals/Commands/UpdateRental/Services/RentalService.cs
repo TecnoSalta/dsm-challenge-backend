@@ -5,6 +5,7 @@ using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
+using MediatR;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 
@@ -12,11 +13,13 @@ public class RentalService : IRentalService
 {
     private readonly IBaseRepository<Rental> _rentalRepo;
     private readonly IBaseRepository<Car> _carRepo;
+    private readonly IMediator _mediator;
 
-    public RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo)
+    public RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator)
     {
         _rentalRepo = rentalRepo;
         _carRepo = carRepo;
+        _mediator = mediator;
     }
 
     public async Task<CancelledRentalDto> CancelRentalAsync(Guid rentalId, CancellationToken ct)
@@ -25,12 +28,10 @@ public class RentalService : IRentalService
                                       .FirstOrDefaultAsync(r => r.Id == rentalId, ct)
                    ?? throw new NotFoundException("Rental not found.");
 
-        if (rental.Status != RentalStatus.Active)
-            throw new BusinessException("Only active rentals can be cancelled.", string.Empty);
+        // Publica el evento directamente desde la entidad
+        await rental.CancelAsync(_mediator);
 
-        rental.Cancel();   // tu método de dominio que pone Status = Cancelled y fecha
-
-        await _rentalRepo.UpdateAsync(rental, true, ct); // true -> SaveChanges
+        await _rentalRepo.UpdateAsync(rental, true, ct);
         return new CancelledRentalDto(rental.Id, rental.Status.ToString());
     }
 
@@ -83,7 +84,6 @@ public class RentalService : IRentalService
             await _carRepo.UpdateAsync(newCar, false, ct);
         }
 
-        // Creamos el DTO usando el constructor del record
         var dto = new UpdatedRentalDto(
             rental.Id,
             rental.CarId,
