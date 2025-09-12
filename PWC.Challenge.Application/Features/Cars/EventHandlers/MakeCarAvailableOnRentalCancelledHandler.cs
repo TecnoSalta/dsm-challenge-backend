@@ -1,8 +1,8 @@
 ﻿using MediatR;
 using PWC.Challenge.Domain.Entities;
-using PWC.Challenge.Domain.Rentals;
 using PWC.Challenge.Application.Common;
 using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Events.Rentals;
 
 namespace PWC.Challenge.Application.Features.Cars.EventHandlers
 {

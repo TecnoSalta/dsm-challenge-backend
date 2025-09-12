@@ -1,9 +1,10 @@
-﻿using System.Text.Json.Serialization;
-using System.Text.Json;
-using PWC.Challenge.Infrastructure;
+﻿using PWC.Challenge.Api;
 using PWC.Challenge.Application;
-using PWC.Challenge.Api;
+using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental.Services;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
+using PWC.Challenge.Infrastructure;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,8 @@ builder.Services
     .AddApiServices(builder.Configuration, builder.Environment);
 
 builder.Services.AddScoped<IRentalService, RentalService>();
+builder.Services.AddScoped<ICompleteRentalService, CompleteRentalService>();
+
 
 var app = builder.Build();
 

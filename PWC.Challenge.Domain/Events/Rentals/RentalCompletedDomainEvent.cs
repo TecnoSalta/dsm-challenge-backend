@@ -1,7 +1,6 @@
-﻿using MediatR;
-using PWC.Challenge.Domain.Common;
+﻿using PWC.Challenge.Domain.Common;
 
-namespace PWC.Challenge.Domain.Rentals
+namespace PWC.Challenge.Domain.Events.Rentals
 {
     public class RentalCompletedDomainEvent(Guid id, Guid carId, DateOnly actualReturnDate) : DomainEvent
     {

@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Domain.Common;
-using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Extensions;
 using System.Linq.Expressions;
 

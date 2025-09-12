@@ -5,7 +5,7 @@ using Moq;
 using PWC.Challenge.Application.Features.Cars.EventHandlers;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
-using PWC.Challenge.Domain.Rentals;
+using PWC.Challenge.Domain.Events.Rentals;
 
 namespace UnitTests.Common;
 public class MediatRHandlerRegistrationTests
