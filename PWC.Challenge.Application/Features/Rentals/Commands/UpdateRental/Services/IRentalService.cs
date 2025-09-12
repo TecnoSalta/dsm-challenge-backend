@@ -14,4 +14,5 @@ public interface IRentalService
     Task<CancelledRentalDto> CancelRentalAsync(
       Guid rentalId,
       CancellationToken ct);
+    Task<CompletedRentalDto> CompleteRentalAsync(Guid rentalId, CancellationToken cancellationToken);
 }

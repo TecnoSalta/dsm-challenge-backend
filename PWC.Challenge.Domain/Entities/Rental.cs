@@ -61,4 +61,15 @@ public class Rental : AggregateRoot
             CarId = newCar.Id;
         }
     }
+
+    public void Complete(DateOnly actualReturnDate)
+    {
+        if (Status != RentalStatus.Active)
+            throw new InvalidOperationException("Only active rentals can be completed.");
+
+        Status = RentalStatus.Completed;
+        EndDate = actualReturnDate;
+
+        AddDomainEvent(new RentalCompletedDomainEvent(Id, CarId, actualReturnDate));
+    }
 }

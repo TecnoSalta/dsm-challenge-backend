@@ -9,18 +9,11 @@ using MediatR;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 
-public class RentalService : IRentalService
+public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator) : IRentalService
 {
-    private readonly IBaseRepository<Rental> _rentalRepo;
-    private readonly IBaseRepository<Car> _carRepo;
-    private readonly IMediator _mediator;
-
-    public RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator)
-    {
-        _rentalRepo = rentalRepo;
-        _carRepo = carRepo;
-        _mediator = mediator;
-    }
+    private readonly IBaseRepository<Rental> _rentalRepo = rentalRepo;
+    private readonly IBaseRepository<Car> _carRepo = carRepo;
+    private readonly IMediator _mediator = mediator;
 
     public async Task<CancelledRentalDto> CancelRentalAsync(Guid rentalId, CancellationToken ct)
     {
@@ -33,6 +26,37 @@ public class RentalService : IRentalService
 
         await _rentalRepo.UpdateAsync(rental, true, ct);
         return new CancelledRentalDto(rental.Id, rental.Status.ToString());
+    }
+
+    public async Task<CompletedRentalDto> CompleteRentalAsync(Guid rentalId, CancellationToken ct)
+    {
+        var rental = await _rentalRepo.QueryTracking()
+                                      .Include(r => r.Car)
+                                      .FirstOrDefaultAsync(r => r.Id == rentalId, ct)
+                     ?? throw new NotFoundException("Rental not found.");
+        if (rental.Status != RentalStatus.Active)
+            throw new BusinessException("Only active rentals can be modified.", string.Empty);
+
+        Car car = await _carRepo.GetByIdAsync(rental.Id, false, ct)
+                     ?? throw new NotFoundException("Car not found.");
+        
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        rental.Complete(today);
+
+        await _rentalRepo.UpdateAsync(rental, true, ct);
+
+
+        if (car != null)
+        {
+            car.MarkAsAvailable();
+            await _carRepo.UpdateAsync(car, false, ct);
+        }
+
+        var dto = new CompletedRentalDto(
+           rental.Id
+       );
+
+        return dto;
     }
 
     public async Task<UpdatedRentalDto> UpdateRentalAsync(
