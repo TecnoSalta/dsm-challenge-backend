@@ -4,28 +4,22 @@ using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Domain.Services;
+using Microsoft.Extensions.Logging;
+using PWC.Challenge.Application.Interfaces;
 
 namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 {
-    public class GetAvailableCarsQueryHandler
-        : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
+    public class GetAvailableCarsQueryHandler(
+        ICarRepository carRepository,
+        IAvailabilityService availabilityService,
+        ICacheService cacheService,
+        ILogger<GetAvailableCarsQueryHandler> logger)
+                : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
     {
-        private readonly ICarRepository _carRepository;
-        private readonly IRentalRepository _rentalRepository;
-        private readonly IServiceRepository _serviceRepository;
-        private readonly IAvailabilityService _availabilityService;
-
-        public GetAvailableCarsQueryHandler(
-            ICarRepository carRepository,
-            IRentalRepository rentalRepository,
-            IServiceRepository serviceRepository,
-            IAvailabilityService availabilityService)
-        {
-            _carRepository = carRepository;
-            _rentalRepository = rentalRepository;
-            _serviceRepository = serviceRepository;
-            _availabilityService = availabilityService;
-        }
+        private readonly ICarRepository _carRepository = carRepository;
+        private readonly IAvailabilityService _availabilityService = availabilityService;
+        private readonly ICacheService _cacheService = cacheService;
+        private readonly ILogger<GetAvailableCarsQueryHandler> _logger = logger;
 
         public async Task<IReadOnlyList<AvailableCarDto>> Handle(
             GetAvailableCarsQuery request,
@@ -35,6 +29,19 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 
             // Validar fechas
             ValidateDates(startDate, endDate);
+
+            // Generar clave de cache
+            var cacheKey = GenerateCacheKey(startDate, endDate, carType, model);
+
+            // Intentar obtener del cache
+            var cachedResult = await _cacheService.GetAsync<IReadOnlyList<AvailableCarDto>>(cacheKey, ct);
+            if (cachedResult != null)
+            {
+                _logger.LogDebug("Cache hit for available cars: {CacheKey}", cacheKey);
+                return cachedResult;
+            }
+
+            _logger.LogDebug("Cache miss for available cars: {CacheKey}", cacheKey);
 
             // Obtener todos los autos activos
             var allCars = await _carRepository.GetAllAsync();
@@ -48,7 +55,7 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 
                 // Verificar disponibilidad completa
                 var isAvailable = await _availabilityService.IsCarAvailableAsync(
-                    car.Id, startDate, endDate);
+                    car.Id, startDate, endDate, ct);
 
                 if (isAvailable)
                 {
@@ -56,9 +63,19 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
                 }
             }
 
-            return availableCars
+            var result = availableCars
                 .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate))
                 .ToList();
+
+            // Guardar en cache con expiración de 30 segundos
+            await _cacheService.SetAsync(cacheKey, result, TimeSpan.FromSeconds(30), ct);
+
+            return result;
+        }
+
+        private string GenerateCacheKey(DateOnly startDate, DateOnly endDate, string? carType, string? model)
+        {
+            return $"available_cars:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{carType ?? "all"}:{model ?? "all"}";
         }
 
         private void ValidateDates(DateOnly startDate, DateOnly endDate)

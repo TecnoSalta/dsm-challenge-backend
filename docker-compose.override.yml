@@ -8,7 +8,21 @@ services:
     ports:
       - "9432:5432"
     restart: always
-    
+    networks:
+      - pwc_network
+
+  pwc.challenge.redis:
+    image: redis:7-alpine
+    container_name: pwc.challenge.redis
+    ports:
+      - "9379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    networks:
+      - pwc_network
+    command: redis-server --appendonly yes
+
   pwc.challenge.api:
     container_name: pwc.challenge.api
     environment:
@@ -16,6 +30,10 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ConnectionStrings__ApplicationDbContext=Server=pwc.challenge.db;Port=5432;Database=PWChallenge;User Id=postgres;Password=postgres;Include Error Detail=true;
+      - ConnectionStrings__Redis=pwc.challenge.redis:6379
+      - RedisSettings__InstanceName=PWChallenge
+      - RedisSettings__AbsoluteExpirationInSeconds=30
+      - RedisSettings__SlidingExpirationInSeconds=15
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
@@ -23,7 +41,17 @@ services:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
     depends_on:
       - pwc.challenge.db
+      - pwc.challenge.redis
     ports:
       - "9080:8080"
       - "9081:8081"
     restart: always
+    networks:
+      - pwc_network
+
+volumes:
+  redis_data:
+
+networks:
+  pwc_network:
+    driver: bridge

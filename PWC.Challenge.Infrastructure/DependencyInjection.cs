@@ -1,37 +1,83 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain;
 using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Interfaces;
+using PWC.Challenge.Domain.Services;
+using PWC.Challenge.Infrastructure.Configurations;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
+using PWC.Challenge.Infrastructure.Services;
+using StackExchange.Redis;
 using System.Reflection;
-namespace PWC.Challenge.Infrastructure;
 
+namespace PWC.Challenge.Infrastructure;
 
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
-       
         var domainAssembly = typeof(DomainAssembly).Assembly;
         var infrastructureAssembly = typeof(InfrastructureAssembly).Assembly;
 
         services.AddMemoryCache();
 
+        // Agregar Redis Cache
+        services.AddRedisCache(configuration);
+
         services.AddAuth();
 
         services.AddDbContexts(configuration);
-
 
         services.AddRepositories(domainAssembly, infrastructureAssembly);
 
         services.AddServices(configuration, environment);
 
+        return services;
+    }
+
+    private static IServiceCollection AddRedisCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            // Configurar Redis Settings
+            services.Configure<RedisSettings>(configuration.GetSection("RedisSettings"));
+
+            // Configurar Redis Distributed Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = configuration["RedisSettings:InstanceName"] ?? "PWChallenge:";
+            });
+
+            // Configurar Connection Multiplexer para operaciones avanzadas
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var config = ConfigurationOptions.Parse(redisConnectionString);
+                config.AbortOnConnectFail = false;
+                config.ConnectRetry = 3;
+                config.ConnectTimeout = 5000;
+                return ConnectionMultiplexer.Connect(config);
+            });
+
+            // Registrar servicio de cache
+            services.AddSingleton<ICacheService, RedisCacheService>();
+        }
+        else
+        {
+            // Fallback a memoria si Redis no está configurado
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<ICacheService, InMemoryCacheService>();
+        }
 
         return services;
     }
@@ -44,12 +90,9 @@ public static class DependencyInjection
         return services;
     }
 
-
     private static IServiceCollection AddDbContexts(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString(nameof(ApplicationDbContext));
-        //TODO
-        //services.AddScoped<ISaveChangesInterceptor, AuditInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
@@ -58,12 +101,7 @@ public static class DependencyInjection
             {
                 npgsqlOptions.UseNetTopologySuite();
             });
-           
         });
-
-        
-        //TODO
-        //services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 
         return services;
     }
@@ -72,12 +110,10 @@ public static class DependencyInjection
     {
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
-        // Registro todos los servicios que implementan IEntityRepository y IAggregateRepository
-
         var repositoryInterfaces = domainAssembly.GetExportedTypes()
             .Where(t => t.IsInterface && !t.IsGenericTypeDefinition &&
                         (t.GetInterfaces().Any(i => i.IsGenericType &&
-                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>) ))))
+                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>)))))
             .ToList();
 
         var repositoryImplementations = infrastructureAssembly.GetExportedTypes()
@@ -95,16 +131,23 @@ public static class DependencyInjection
             }
         }
 
-
-        
         return services;
     }
 
     private static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
-       //TODO
-        // services.AddSingleton<ITokenService, JwtService>();
+        // Registrar servicios de dominio que necesiten cache
+        services.AddScoped<IAvailabilityService>(sp =>
+        {
+            var originalService = new AvailabilityService(
+                sp.GetRequiredService<ICarRepository>(),
+                sp.GetRequiredService<IRentalRepository>(),
+                sp.GetRequiredService<IServiceRepository>());
+
+            var cacheService = sp.GetRequiredService<ICacheService>();
+            return new CachedAvailabilityService(originalService, cacheService);
+        });
+
         return services;
     }
-
 }
