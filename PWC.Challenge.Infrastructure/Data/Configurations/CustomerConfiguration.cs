@@ -1,10 +1,8 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PWC.Challenge.Domain.Entities;
+
 namespace PWC.Challenge.Infrastructure.Data.Configurations;
-
-
 
 public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 {
@@ -22,6 +20,16 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .IsRequired()
             .HasMaxLength(500);
 
+        builder.Property(c => c.Email)
+            .IsRequired()
+            .HasMaxLength(200);
 
+        builder.HasMany(c => c.Rentals)
+            .WithOne(r => r.Customer)
+            .HasForeignKey(r => r.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(c => c.Email)
+            .IsUnique();
     }
 }

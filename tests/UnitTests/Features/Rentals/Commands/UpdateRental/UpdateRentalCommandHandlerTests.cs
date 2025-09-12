@@ -52,7 +52,7 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
         customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
 
@@ -92,12 +92,12 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
         customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
         ctx.Cars.Add(WithAudit(car));
 
-        var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave");
+        var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave", "foo@g.com");
         ctx.Rentals.Add(WithAudit(new Rental(Guid.NewGuid(), otherCustomer, car,
                                              new DateOnly(2025, 10, 6),
                                              new DateOnly(2025, 10, 10),40)));
@@ -133,7 +133,7 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St");
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
         customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
 

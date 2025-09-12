@@ -1,17 +1,24 @@
+version: '3.8'
+
 services:
   pwc.challenge.db:
     image: postgis/postgis:16-3.4-alpine
     volumes:
       - pwc.challenge.volume.postgres:/var/lib/postgresql/data/
 
+  pwc.challenge.redis:
+    image: redis:7-alpine
+
   pwc.challenge.api:
     image: ${DOCKER_REGISTRY:-}pwcchallengeapi
     build:
       context: .
       dockerfile: PWC.Challenge.Api/Dockerfile
-    volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
-      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
 
 volumes:
   pwc.challenge.volume.postgres:
+  redis_data:
+
+networks:
+  pwc_network:
+    driver: bridge

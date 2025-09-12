@@ -25,7 +25,7 @@ public class Rental : AggregateRoot
     public Car Car { get; private set; } = default!;
 
     // Private constructor for EF Core
-    private Rental() { }
+    public Rental() { }
 
     // Public constructor
     public Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)

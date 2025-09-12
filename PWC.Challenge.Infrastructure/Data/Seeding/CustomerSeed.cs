@@ -14,7 +14,7 @@ public class CustomerSeed : ISeedData
 
         var fooCustomer = new Customer(
             Customer.FooId,
-            "SuperAdmin", "Address 1234"
+            "SuperAdmin", "Address 1234","foo@g.com"
         )
         {
             CreatedAt = createdAt,

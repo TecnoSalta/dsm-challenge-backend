@@ -1,20 +1,20 @@
-using PWC.Challenge.Domain.Common;
+﻿using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Domain.Entities;
 
 public class Car : AggregateRoot
 {
-    // Propiedades p�blicas de solo lectura para EF
+    // Propiedades públicas de solo lectura para EF
     public string Type { get; private set; } = default!;
     public string Model { get; private set; } = default!;
+    public decimal DailyRate { get; private set; }
     public CarStatus Status { get; private set; } = CarStatus.Available;
     public IReadOnlyList<Service> Services => _services.AsReadOnly();
+    public IReadOnlyList<Rental> Rentals => _rentals.AsReadOnly(); // ✅ AGREGAR propiedad Rentals
+
     private readonly List<Service> _services = new();
-    public decimal DailyRate
-    {
-        get; private set;
-    }
+    private readonly List<Rental> _rentals = new(); // ✅ AGREGAR campo backing field
 
     // Constructor protegido para EF
     protected Car() { }
@@ -43,6 +43,15 @@ public class Car : AggregateRoot
         _services.Add(new Service(date, Id, durationDays));
     }
 
+    // ✅ AGREGAR método para agregar rental
+    public void AddRental(Rental rental)
+    {
+        if (rental == null) throw new ArgumentNullException(nameof(rental));
+        if (rental.CarId != Id) throw new InvalidOperationException("Rental does not belong to this car");
+
+        _rentals.Add(rental);
+    }
+
     public void MarkAsRented()
     {
         if (Status != CarStatus.Available)
@@ -50,7 +59,6 @@ public class Car : AggregateRoot
 
         Status = CarStatus.Rented;
     }
-
 
     public void MarkAsAvailable()
     {
@@ -65,19 +73,7 @@ public class Car : AggregateRoot
 
     public bool IsInServicePeriod(DateOnly startDate, DateOnly endDate)
     {
-        // Check if the requested period overlaps with any scheduled service
-        foreach (var service in Services)
-        {
-            var serviceStart = service.Date;
-            var serviceEnd = service.Date.AddDays(2); // Service lasts 2 days
-
-            if (startDate < serviceEnd && endDate > serviceStart)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _services.Any(service => service.OverlapsWith(startDate, endDate));
     }
 
     public bool IsAvailableForRental(DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)
