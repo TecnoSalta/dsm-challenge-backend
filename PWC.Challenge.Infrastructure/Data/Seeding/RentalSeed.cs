@@ -13,19 +13,23 @@ public class RentalSeed : ISeedData
         var createdAt = DateTime.MinValue;
         var createdBy = "Anonymous";
 
-        modelBuilder.Entity<Rental>().HasData(new
-        {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222221"),
-            CustomerId = Customer.FooId,
-            CarId = Car.Car1Id,
-            StartDate = new DateOnly(2025, 01, 01),
-            EndDate = new DateOnly(2025, 01, 15),
-            CreatedAt = createdAt,
-            CreatedBy = createdBy,
-            IsDeleted = false,
-            Status = RentalStatus.Active,
-            DailyRate = 100m, // Valor que faltaba
-            TotalCost = 1260m  // Valor que faltaba (100 * 14 * 0.9)
-        });
+        var rentalId = Guid.Parse("22222222-2222-2222-2222-222222222221");
+
+        modelBuilder.Entity<Rental>().HasData(
+            new
+            {
+                Id = rentalId,
+                CustomerId = Customer.FooId,
+                CarId = Car.Car1Id,
+                CreatedAt = createdAt,
+                CreatedBy = createdBy,
+                IsDeleted = false,
+                Status = RentalStatus.Active,
+                DailyRate = 100m,
+                TotalCost = 1260m
+            });
+
+        modelBuilder.Entity<Rental>().OwnsOne(r => r.RentalPeriod).HasData(
+            new { RentalId = rentalId, StartDate = new DateOnly(2025, 1, 1), EndDate = new DateOnly(2025, 1, 15) });
     }
 }

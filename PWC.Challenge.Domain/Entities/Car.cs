@@ -1,4 +1,4 @@
-﻿﻿using PWC.Challenge.Domain.Common;
+﻿﻿﻿﻿using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Domain.Entities;
@@ -40,7 +40,7 @@ public class Car : AggregateRoot
         if (_services.Any(s => s.OverlapsWith(date, date.AddDays(durationDays))))
             throw new InvalidOperationException("Service overlaps with existing service.");
 
-        _services.Add(new Service(date, Id, durationDays));
+        _services.Add(new Service(date, durationDays));
     }
 
     public void AddRental(Rental rental)
@@ -89,6 +89,6 @@ public class Car : AggregateRoot
     // Método de ayuda para pruebas
     public void AddService(DateOnly date, int durationDays)
     {
-        _services.Add(new Service(date, Id, durationDays));
+        _services.Add(new Service(date, durationDays));
     }
 }

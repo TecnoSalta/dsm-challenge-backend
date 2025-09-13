@@ -25,14 +25,13 @@ namespace PWC.Challenge.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasConversion<string>();
 
-            // Configurar la colección de Services como owned entities
+            // Configure the collection of Services as owned entities
             builder.OwnsMany(c => c.Services, serviceBuilder =>
             {
-                serviceBuilder.WithOwner().HasForeignKey("CarId");
-                serviceBuilder.Property<Guid>("Id");
-                serviceBuilder.HasKey("Id");
-                serviceBuilder.Property(s => s.Date).IsRequired();
-                serviceBuilder.Property(s => s.DurationDays).IsRequired();
+                serviceBuilder.ToTable("Services");
+                serviceBuilder.WithOwner().HasForeignKey("CarId"); // This will be the shadow FK property
+                serviceBuilder.Property<Guid>("Id").ValueGeneratedOnAdd(); // Each service instance needs a key
+                serviceBuilder.HasKey("Id"); // Set the key for the owned type
             });
 
             builder.HasMany(c => c.Rentals)
