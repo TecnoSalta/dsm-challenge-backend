@@ -4,6 +4,7 @@ using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Events.Rentals;
 using PWC.Challenge.Domain.Exceptions;
 using PWC.Challenge.Domain.ValueObjects;
+using PWC.Challenge.Domain.Services;
 
 namespace PWC.Challenge.Domain.Entities;
 

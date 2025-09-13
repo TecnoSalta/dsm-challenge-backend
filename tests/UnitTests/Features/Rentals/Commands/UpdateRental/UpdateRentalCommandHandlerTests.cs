@@ -10,6 +10,7 @@ using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;
+using PWC.Challenge.Domain.Services;
 using PWC.Challenge.Infrastructure.Data.Common;
 
 namespace UnitTests.Features.Rentals.Commands.UpdateRental;
@@ -41,7 +42,10 @@ public class UpdateRentalCommandHandlerTests
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        return new RentalService(rentalRepo, carRepo, mediatorMock.Object);
+        var availabilityServiceMock = new Mock<IAvailabilityService>();
+        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>())).ReturnsAsync(true);
+
+        return new RentalService(rentalRepo, carRepo, mediatorMock.Object, availabilityServiceMock.Object);
     }
 
     [Fact]
@@ -106,26 +110,33 @@ public class UpdateRentalCommandHandlerTests
         var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave", "foo@g.com");
         ctx.Customers.Add(WithAudit(otherCustomer));
 
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
         ctx.Rentals.Add(WithAudit(Rental.CreateForTest(Guid.NewGuid(), otherCustomer, car,
-                                                       new DateOnly(2025, 10, 6),
-                                                       new DateOnly(2025, 10, 10), 40)));
+                                                       today.AddDays(5),
+                                                       today.AddDays(9), 40)));
         
         var rentalToUpdate = WithAudit(Rental.CreateForTest(rentalId, customer, car,
-                                                            new DateOnly(2025, 10, 1),
-                                                            new DateOnly(2025, 10, 5), 40));
+                                                            today,
+                                                            today.AddDays(4), 40));
         rentalToUpdate.MarkAsActive();
         ctx.Rentals.Add(rentalToUpdate);
 
         await ctx.SaveChangesAsync();
 
-        var rentalService = CreateRentalService(ctx);
+        // Arrange: Mock availability service to return false for this specific test
+        var availabilityServiceMock = new Mock<IAvailabilityService>();
+        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>())).ReturnsAsync(false);
+        var mediatorMock = new Mock<IMediator>();
+
+        var rentalService = new RentalService(new BaseRepository<Rental>(ctx), new BaseRepository<Car>(ctx), mediatorMock.Object, availabilityServiceMock.Object);
         var handler = new UpdateRentalCommandHandler(rentalService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
             new UpdateRentalDto(
-                new DateOnly(2025, 10, 6),
-                new DateOnly(2025, 10, 8),
+                today.AddDays(5),
+                today.AddDays(7),
                 null
             )
         );
@@ -163,9 +174,12 @@ public class UpdateRentalCommandHandlerTests
         await rentalEntity.CancelAsync(mediatorMock.Object);
         await ctx.SaveChangesAsync();
 
+        var availabilityServiceMock = new Mock<IAvailabilityService>();
+
         var rentalService = new RentalService(new BaseRepository<Rental>(ctx),
                                               new BaseRepository<Car>(ctx),
-                                              mediatorMock.Object);
+                                              mediatorMock.Object,
+                                              availabilityServiceMock.Object);
         var handler = new UpdateRentalCommandHandler(rentalService);
 
         var cmd = new UpdateRentalCommand(
@@ -181,5 +195,93 @@ public class UpdateRentalCommandHandlerTests
         await Assert.ThrowsAsync<BusinessException>(
             () => handler.Handle(cmd, CancellationToken.None)
         );
+    }
+
+    [Fact]
+    public async Task Handle_WhenCarIsChangedAndNewCarIsFree_ShouldUpdateRentalAndCarStatus()
+    {
+        // Arrange
+        await using var ctx = new ApplicationDbContext(NewInMemContext());
+        var rentalId = Guid.NewGuid();
+
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        ctx.Customers.Add(WithAudit(customer));
+
+        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
+        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, CarStatus.Available);
+        ctx.Cars.Add(WithAudit(originalCar));
+        ctx.Cars.Add(WithAudit(newCar));
+
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var rental = WithAudit(Rental.CreateForTest(rentalId, customer, originalCar,
+                                                    startDate,
+                                                    startDate.AddDays(5), 100));
+        rental.MarkAsActive();
+        ctx.Rentals.Add(rental);
+        await ctx.SaveChangesAsync();
+
+        var rentalService = CreateRentalService(ctx);
+        var handler = new UpdateRentalCommandHandler(rentalService);
+
+        var cmd = new UpdateRentalCommand(
+            rentalId,
+            new UpdateRentalDto(null, null, newCar.Id)
+        );
+
+        // Act
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.CarId.Should().Be(newCar.Id);
+
+        var updatedRental = await ctx.Rentals.FindAsync(rentalId);
+        updatedRental.CarId.Should().Be(newCar.Id);
+
+        var updatedOriginalCar = await ctx.Cars.FindAsync(originalCar.Id);
+        updatedOriginalCar.Status.Should().Be(CarStatus.Available);
+
+        var updatedNewCar = await ctx.Cars.FindAsync(newCar.Id);
+        updatedNewCar.Status.Should().Be(CarStatus.Rented);
+    }
+
+    [Fact]
+    public async Task Handle_WhenChangingCarAndNewCarIsNotAvailable_ShouldThrowBusinessException()
+    {
+        // Arrange
+        await using var ctx = new ApplicationDbContext(NewInMemContext());
+        var rentalId = Guid.NewGuid();
+
+        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        ctx.Customers.Add(WithAudit(customer));
+
+        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
+        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, CarStatus.Available);
+        ctx.Cars.Add(WithAudit(originalCar));
+        ctx.Cars.Add(WithAudit(newCar));
+
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var rental = WithAudit(Rental.CreateForTest(rentalId, customer, originalCar,
+                                                    startDate,
+                                                    startDate.AddDays(5), 100));
+        rental.MarkAsActive();
+        ctx.Rentals.Add(rental);
+        await ctx.SaveChangesAsync();
+
+        // Arrange: Mock availability service to return false for this specific test
+        var availabilityServiceMock = new Mock<IAvailabilityService>();
+        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(newCar.Id, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), rentalId)).ReturnsAsync(false);
+        var mediatorMock = new Mock<IMediator>();
+
+        var rentalService = new RentalService(new BaseRepository<Rental>(ctx), new BaseRepository<Car>(ctx), mediatorMock.Object, availabilityServiceMock.Object);
+        var handler = new UpdateRentalCommandHandler(rentalService);
+
+        var cmd = new UpdateRentalCommand(
+            rentalId,
+            new UpdateRentalDto(null, null, newCar.Id)
+        );
+
+        // Act & Assert
+        await Assert.ThrowsAsync<BusinessException>(() => handler.Handle(cmd, CancellationToken.None));
     }
 }

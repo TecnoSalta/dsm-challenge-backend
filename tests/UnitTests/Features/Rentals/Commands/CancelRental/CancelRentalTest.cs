@@ -4,11 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using PWC.Challenge.Application.Features.Cars.EventHandlers;
 using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
+using PWC.Challenge.Domain.Services;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
+using Moq;
 
 namespace UnitTests.Features.Rentals.Commands.CancelRental;
 
@@ -48,7 +50,11 @@ public class CancelRentalCommandHandlerIntegrationTests
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 
         // Registrar RentalService
-        services.AddScoped<RentalService>();
+        services.AddScoped<IRentalService, RentalService>();
+
+        // Mock IAvailabilityService, ya que RentalService ahora depende de él
+        var availabilityServiceMock = new Mock<IAvailabilityService>();
+        services.AddSingleton(availabilityServiceMock.Object);
 
         var provider = services.BuildServiceProvider();
 
@@ -71,7 +77,7 @@ public class CancelRentalCommandHandlerIntegrationTests
         )));
         await ctx.SaveChangesAsync();
 
-        var rentalService = provider.GetRequiredService<RentalService>();
+        var rentalService = provider.GetRequiredService<IRentalService>();
         var handler = new CancelRentalCommandHandler(rentalService);
 
         var cmd = new CancelRentalCommand(rentalId);

@@ -22,7 +22,6 @@ public class Customer : Entity
     public string Address { get; private set; } = null!;
     public string Email { get; private set; } = null!;
 
-    // ✅ AGREGAR método para mantener la consistencia del dominio
     public void AddRental(Rental rental)
     {
         if (rental == null) throw new ArgumentNullException(nameof(rental));

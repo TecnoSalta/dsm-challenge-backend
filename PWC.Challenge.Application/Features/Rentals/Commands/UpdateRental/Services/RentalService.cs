@@ -6,14 +6,16 @@ using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using MediatR;
+using PWC.Challenge.Domain.Services;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 
-public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator) : IRentalService
+public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator, IAvailabilityService availabilityService) : IRentalService
 {
     private readonly IBaseRepository<Rental> _rentalRepo = rentalRepo;
     private readonly IBaseRepository<Car> _carRepo = carRepo;
     private readonly IMediator _mediator = mediator;
+    private readonly IAvailabilityService _availabilityService = availabilityService;
 
     public async Task<CancelledRentalDto> CancelRentalAsync(Guid rentalId, CancellationToken ct)
     {
@@ -77,6 +79,8 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         var startDate = newStart ?? rental.RentalPeriod.StartDate;
         var endDate = newEnd ?? rental.RentalPeriod.EndDate;
 
+        var originalCar = rental.Car; // Keep a reference to the original car
+
         Car? newCar = null;
         if (newCarId.HasValue && newCarId.Value != rental.CarId)
         {
@@ -85,15 +89,10 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         }
 
         // Validamos disponibilidad antes de aplicar cambios
-        var carIdToCheck = newCar?.Id ?? rental.CarId;
-        bool occupied = await _rentalRepo.Query()
-            .AnyAsync(r => r.Id != rental.Id &&
-                          r.CarId == carIdToCheck &&
-                          r.Status == RentalStatus.Active &&                          
-                          r.RentalPeriod.StartDate < endDate &&
-                          r.RentalPeriod.EndDate > startDate, ct);
+        var carIdToCheck = newCarId ?? rental.CarId;
+        var isAvailable = await _availabilityService.IsCarAvailableAsync(carIdToCheck, startDate, endDate, rental.Id);
 
-        if (occupied)
+        if (!isAvailable)
             throw new BusinessException("Car is not available in the requested interval.", string.Empty);
 
         // Aplicar cambios usando los métodos de dominio
@@ -114,9 +113,8 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         // Si el coche cambió, actualizamos el estado del coche anterior y el nuevo
         if (newCar != null)
         {
-            var originalCar = await _carRepo.GetByIdAsync(rental.CarId, false, ct);
-            originalCar?.MarkAsAvailable(); // El coche original vuelve a estar disponible
-            if (originalCar != null) await _carRepo.UpdateAsync(originalCar, false, ct);
+            originalCar.MarkAsAvailable();
+            await _carRepo.UpdateAsync(originalCar, false, ct);
 
             newCar.MarkAsRented();
             await _carRepo.UpdateAsync(newCar, false, ct);
