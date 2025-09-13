@@ -2,12 +2,12 @@
 using Moq;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;
-using PWC.Challenge.Application.Interfaces;
+using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Domain.Services;
 
-namespace PWC.Challenge.UnitTests.Features.Availability.Queries
+namespace UnitTests.Features.Availability.Queries
 {
     public class GetAvailableCarsQueryHandlerTests
     {

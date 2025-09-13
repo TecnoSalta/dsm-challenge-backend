@@ -1,4 +1,4 @@
-﻿namespace PWC.Challenge.Infrastructure.Services
+﻿namespace PWC.Challenge.Application.Services
 {
     public interface ICacheService
     {

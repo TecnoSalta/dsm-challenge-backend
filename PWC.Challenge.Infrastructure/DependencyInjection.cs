@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -70,13 +68,14 @@ public static class DependencyInjection
                 return ConnectionMultiplexer.Connect(config);
             });
 
-            // Registrar servicio de cache
+            // ✅ Registrar servicio de cache con la interfaz de Application
             services.AddSingleton<ICacheService, RedisCacheService>();
         }
         else
         {
             // Fallback a memoria si Redis no está configurado
             services.AddDistributedMemoryCache();
+            // ✅ Registrar servicio de cache con la interfaz de Application
             services.AddSingleton<ICacheService, InMemoryCacheService>();
         }
 
@@ -146,9 +145,9 @@ public static class DependencyInjection
                 sp.GetRequiredService<IServiceRepository>());
 
             var cacheService = sp.GetRequiredService<ICacheService>();
-            var logger = sp.GetRequiredService<ILogger<CachedAvailabilityService>>(); // Agregar esta línea
+            var logger = sp.GetRequiredService<ILogger<CachedAvailabilityService>>();
 
-            return new CachedAvailabilityService(originalService, cacheService, logger); // Pasar el logger
+            return new CachedAvailabilityService(originalService, cacheService, logger);
         });
 
         return services;

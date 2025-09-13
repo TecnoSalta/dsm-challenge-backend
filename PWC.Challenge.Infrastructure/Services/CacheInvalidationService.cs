@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using PWC.Challenge.Application.Services;
 
 namespace PWC.Challenge.Infrastructure.Services
 {

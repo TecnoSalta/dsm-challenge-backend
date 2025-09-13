@@ -19,6 +19,7 @@
   <ItemGroup>
     <Folder Include="Features\Rentals\Commands\CreateRental\" />
     <Folder Include="Features\Customers\Queries\" />
+    <Folder Include="Interfaces\" />
   </ItemGroup>
 
 </Project>

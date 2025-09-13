@@ -4,11 +4,15 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Text.Json;
 using System.Text;
+using System;
+using System.Threading.Tasks;
+using System.Threading;
 using PWC.Challenge.Infrastructure.Configurations;
+using PWC.Challenge.Application.Services;
 
 namespace PWC.Challenge.Infrastructure.Services
 {
-    public class RedisCacheService : ICacheService
+    public class RedisCacheService : ICacheService // Implementa la interfaz de Application
     {
         private readonly IDistributedCache _cache;
         private readonly RedisSettings _redisSettings;
