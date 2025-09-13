@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Interfaces;
@@ -21,8 +21,8 @@ public class CarRepository : BaseRepository<Car>, ICarRepository
             .Where(c => !Context.Set<Rental>()
                 .Any(r => r.CarId == c.Id &&
                          r.Status == RentalStatus.Active &&
-                         r.StartDate < endDate &&
-                         r.EndDate > startDate));
+                         r.RentalPeriod.StartDate < endDate &&
+                         r.RentalPeriod.EndDate > startDate));
 
         if (!string.IsNullOrEmpty(carType))
             query = query.Where(c => c.Type == carType);
@@ -50,8 +50,8 @@ public class CarRepository : BaseRepository<Car>, ICarRepository
         var rentalQuery = Context.Set<Rental>()
             .Where(r => r.CarId == carId &&
                        r.Status == RentalStatus.Active &&
-                       r.StartDate < endDate &&
-                       r.EndDate > startDate);
+                       r.RentalPeriod.StartDate < endDate &&
+                       r.RentalPeriod.EndDate > startDate);
 
         if (excludedRentalId.HasValue)
             rentalQuery = rentalQuery.Where(r => r.Id != excludedRentalId.Value);

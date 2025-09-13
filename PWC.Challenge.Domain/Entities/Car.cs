@@ -1,4 +1,4 @@
-﻿using PWC.Challenge.Domain.Common;
+﻿﻿using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 
 namespace PWC.Challenge.Domain.Entities;
@@ -43,7 +43,6 @@ public class Car : AggregateRoot
         _services.Add(new Service(date, Id, durationDays));
     }
 
-    // ✅ AGREGAR método para agregar rental
     public void AddRental(Rental rental)
     {
         if (rental == null) throw new ArgumentNullException(nameof(rental));
@@ -85,5 +84,11 @@ public class Car : AggregateRoot
         // Check existing rentals (this would typically be handled by a domain service)
         // For simplicity, we assume a method exists to check for overlapping rentals
         return true;
+    }
+
+    // Método de ayuda para pruebas
+    public void AddService(DateOnly date, int durationDays)
+    {
+        _services.Add(new Service(date, Id, durationDays));
     }
 }

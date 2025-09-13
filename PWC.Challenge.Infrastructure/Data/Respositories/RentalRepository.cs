@@ -17,8 +17,8 @@ public class RentalRepository : BaseRepository<Rental>, IRentalRepository
         var query = Context.Set<Rental>()
             .Where(r => r.CarId == carId &&
                        r.Status == RentalStatus.Active &&
-                       r.StartDate < endDate &&
-                       r.EndDate > startDate);
+                       r.RentalPeriod.StartDate < endDate &&
+                       r.RentalPeriod.EndDate > startDate);
 
         if (excludedRentalId.HasValue)
             query = query.Where(r => r.Id != excludedRentalId.Value);
@@ -31,8 +31,8 @@ public class RentalRepository : BaseRepository<Rental>, IRentalRepository
         var query = Context.Set<Rental>()
             .Where(r => r.CarId == carId &&
                        r.Status == RentalStatus.Active &&
-                       r.StartDate < endDate &&
-                       r.EndDate > startDate);
+                       r.RentalPeriod.StartDate < endDate &&
+                       r.RentalPeriod.EndDate > startDate);
 
         if (excludedRentalId.HasValue)
             query = query.Where(r => r.Id != excludedRentalId.Value);

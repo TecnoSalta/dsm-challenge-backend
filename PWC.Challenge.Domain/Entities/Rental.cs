@@ -1,4 +1,4 @@
-﻿using MediatR;
+﻿﻿using MediatR;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Events.Rentals;
@@ -12,8 +12,6 @@ public class Rental : AggregateRoot
     // Properties
     public Guid CustomerId { get; private set; }
     public Guid CarId { get; private set; }
-    public DateOnly StartDate { get; private set; }
-    public DateOnly EndDate { get; private set; }
     public RentalStatus Status { get; private set; } = RentalStatus.Active;
     public RentalPeriod RentalPeriod { get; private set; }
     public decimal TotalCost { get; private set; }
@@ -25,10 +23,10 @@ public class Rental : AggregateRoot
     public Car Car { get; private set; } = default!;
 
     // Private constructor for EF Core
-    public Rental() { }
+    private Rental() { }
 
     // Public constructor
-    public Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)
+    private Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate, bool skipValidation = false)
     {
         ValidateRentalPeriod(startDate, endDate);
         ValidateCarAvailability(car, startDate, endDate);
@@ -38,8 +36,6 @@ public class Rental : AggregateRoot
         Car = car ?? throw new ArgumentNullException(nameof(car));
         CustomerId = customer.Id;
         CarId = car.Id;
-        StartDate = startDate;
-        EndDate = endDate;
         DailyRate = dailyRate;
         RentalPeriod = RentalPeriod.Create(startDate, endDate);
         TotalCost = CalculateTotalCost(dailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
@@ -54,7 +50,7 @@ public class Rental : AggregateRoot
         if (Status != RentalStatus.Confirmed && Status != RentalStatus.Active)
             throw new RentalOperationException("Only confirmed or active rentals can be cancelled.");
 
-        if (StartDate <= DateOnly.FromDateTime(DateTime.UtcNow))
+        if (RentalPeriod.StartDate <= DateOnly.FromDateTime(DateTime.UtcNow))
             throw new RentalOperationException("Cannot cancel a rental that has already started.");
 
         Status = RentalStatus.Cancelled;
@@ -65,14 +61,12 @@ public class Rental : AggregateRoot
 
     public void UpdateRentalDates(DateOnly newStartDate, DateOnly newEndDate)
     {
-        if (Status != RentalStatus.Confirmed)
-            throw new RentalOperationException("Only confirmed rentals can be modified.");
+        if (Status != RentalStatus.Confirmed && Status != RentalStatus.Active)
+            throw new RentalOperationException("Only confirmed or active rentals can be modified.");
 
         ValidateRentalPeriod(newStartDate, newEndDate);
         ValidateCarAvailability(Car, newStartDate, newEndDate, Id);
 
-        StartDate = newStartDate;
-        EndDate = newEndDate;
         RentalPeriod = RentalPeriod.Create(newStartDate, newEndDate);
         TotalCost = CalculateTotalCost(DailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
 
@@ -81,10 +75,10 @@ public class Rental : AggregateRoot
 
     public void ChangeCar(Car newCar, decimal newDailyRate)
     {
-        if (Status != RentalStatus.Confirmed)
-            throw new RentalOperationException("Only confirmed rentals can be modified.");
+        if (Status != RentalStatus.Confirmed && Status != RentalStatus.Active)
+            throw new RentalOperationException("Only confirmed or active rentals can be modified.");
 
-        ValidateCarAvailability(newCar, StartDate, EndDate, Id);
+        ValidateCarAvailability(newCar, RentalPeriod.StartDate, RentalPeriod.EndDate, Id);
 
         Car = newCar;
         CarId = newCar.Id;
@@ -99,7 +93,7 @@ public class Rental : AggregateRoot
         if (Status != RentalStatus.Confirmed)
             throw new RentalOperationException("Only confirmed rentals can be activated.");
 
-        if (StartDate > DateOnly.FromDateTime(DateTime.UtcNow))
+        if (RentalPeriod.StartDate > DateOnly.FromDateTime(DateTime.UtcNow))
             throw new RentalOperationException("Cannot activate a rental before its start date.");
 
         Status = RentalStatus.Active;
@@ -112,14 +106,14 @@ public class Rental : AggregateRoot
         if (Status != RentalStatus.Active)
             throw new RentalOperationException("Only active rentals can be completed.");
 
-        if (actualReturnDate < StartDate)
+        if (actualReturnDate < RentalPeriod.StartDate)
             throw new RentalOperationException("Return date cannot be before start date.");
 
         Status = RentalStatus.Completed;
         ActualReturnDate = actualReturnDate;
 
-        // Calculate any additional charges for late return or discounts for early return
-        var actualRentalPeriod = RentalPeriod.Create(StartDate, actualReturnDate);
+        // Calculate any additional charges for late return or discounts for early return        
+        var actualRentalPeriod = RentalPeriod.Create(RentalPeriod.StartDate, actualReturnDate);
 
         // If the actual rental period differs from the planned period, raise event
         if (actualRentalPeriod.DurationDays != RentalPeriod.DurationDays) // CAMBIADO: Days → DurationDays
@@ -138,10 +132,10 @@ public class Rental : AggregateRoot
         if (Status != RentalStatus.Completed || !ActualReturnDate.HasValue)
             throw new RentalOperationException("Late fees can only be applied to completed rentals.");
 
-        if (ActualReturnDate > EndDate)
+        if (ActualReturnDate > RentalPeriod.EndDate)
         {
-            var lateDays = (ActualReturnDate.Value.ToDateTime(TimeOnly.MinValue) -
-                           EndDate.ToDateTime(TimeOnly.MinValue)).Days;
+            var lateDays = (ActualReturnDate.Value.DayNumber -
+                           RentalPeriod.EndDate.DayNumber);
 
             var lateFee = lateDays * lateFeePerDay;
             TotalCost += lateFee;
@@ -198,6 +192,9 @@ public class Rental : AggregateRoot
     // Factory method for testing
     public static Rental CreateForTest(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)
     {
-        return new Rental(id, customer, car, startDate, endDate, dailyRate);
+        var rental = new Rental { Id = id, Customer = customer, Car = car, DailyRate = dailyRate, Status = RentalStatus.Confirmed };
+        rental.RentalPeriod = RentalPeriod.Create(startDate, endDate);
+        rental.TotalCost = rental.CalculateTotalCost(dailyRate, rental.RentalPeriod.DurationDays);
+        return rental;
     }
 }

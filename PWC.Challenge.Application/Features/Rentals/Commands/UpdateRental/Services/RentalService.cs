@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Common.Exceptions;
@@ -37,8 +37,8 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         if (rental.Status != RentalStatus.Active)
             throw new BusinessException("Only active rentals can be modified.", string.Empty);
 
-        Car car = await _carRepo.GetByIdAsync(rental.Id, false, ct)
-                     ?? throw new NotFoundException("Car not found.");
+        Car car = await _carRepo.GetByIdAsync(rental.CarId, false, ct)
+                     ?? throw new NotFoundException(nameof(Car), rental.CarId);
         
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
         rental.Complete(today);
@@ -74,8 +74,8 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         if (rental.Status != RentalStatus.Active)
             throw new BusinessException("Only active rentals can be modified.", string.Empty);
 
-        var startDate = newStart ?? rental.StartDate;
-        var endDate = newEnd ?? rental.EndDate;
+        var startDate = newStart ?? rental.RentalPeriod.StartDate;
+        var endDate = newEnd ?? rental.RentalPeriod.EndDate;
 
         Car? newCar = null;
         if (newCarId.HasValue && newCarId.Value != rental.CarId)
@@ -89,21 +89,35 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         bool occupied = await _rentalRepo.Query()
             .AnyAsync(r => r.Id != rental.Id &&
                           r.CarId == carIdToCheck &&
-                          r.Status == RentalStatus.Active &&
-                          r.StartDate < endDate &&
-                          r.EndDate > startDate, ct);
+                          r.Status == RentalStatus.Active &&                          
+                          r.RentalPeriod.StartDate < endDate &&
+                          r.RentalPeriod.EndDate > startDate, ct);
 
         if (occupied)
             throw new BusinessException("Car is not available in the requested interval.", string.Empty);
 
-        // Usamos el método de dominio para mantener lógica encapsulada
-        rental.UpdateRentalDates(startDate, endDate);
+        // Aplicar cambios usando los métodos de dominio
+        if (newCar != null)
+        {
+            // Asumimos que si se cambia el coche, la tarifa también puede cambiar.
+            // Aquí usamos la tarifa del coche nuevo como ejemplo.
+            rental.ChangeCar(newCar, newCar.DailyRate);
+        }
+        
+        if (newStart.HasValue || newEnd.HasValue)
+        {
+            rental.UpdateRentalDates(startDate, endDate);
+        }
 
         await _rentalRepo.UpdateAsync(rental, true, ct);
 
-        // Si el coche cambió, actualizamos el estado del nuevo coche
+        // Si el coche cambió, actualizamos el estado del coche anterior y el nuevo
         if (newCar != null)
         {
+            var originalCar = await _carRepo.GetByIdAsync(rental.CarId, false, ct);
+            originalCar?.MarkAsAvailable(); // El coche original vuelve a estar disponible
+            if (originalCar != null) await _carRepo.UpdateAsync(originalCar, false, ct);
+
             newCar.MarkAsRented();
             await _carRepo.UpdateAsync(newCar, false, ct);
         }
@@ -111,8 +125,8 @@ public class RentalService(IBaseRepository<Rental> rentalRepo, IBaseRepository<C
         var dto = new UpdatedRentalDto(
             rental.Id,
             rental.CarId,
-            rental.StartDate,
-            rental.EndDate,
+            rental.RentalPeriod.StartDate,
+            rental.RentalPeriod.EndDate,
             "Rental updated successfully."
         );
 

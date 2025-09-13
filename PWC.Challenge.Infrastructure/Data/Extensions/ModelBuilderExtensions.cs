@@ -36,7 +36,8 @@ public static class ModelBuilderExtensions
     {
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(TInterface).IsAssignableFrom(entityType.ClrType))
+            // Ignorar tipos owned para evitar conflictos
+            if (entityType.IsOwned() == false && typeof(TInterface).IsAssignableFrom(entityType.ClrType))
             {
                 var parameter = Expression.Parameter(entityType.ClrType, "e");
                 var body = ReplacingExpressionVisitor.Replace(filter.Parameters.Single(), parameter, filter.Body);

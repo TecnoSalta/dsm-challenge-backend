@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 
@@ -23,7 +23,9 @@ public class RentalSeed : ISeedData
             CreatedAt = createdAt,
             CreatedBy = createdBy,
             IsDeleted = false,
-            Status =RentalStatus.Active
+            Status = RentalStatus.Active,
+            DailyRate = 100m, // Valor que faltaba
+            TotalCost = 1260m  // Valor que faltaba (100 * 14 * 0.9)
         });
     }
 }

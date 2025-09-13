@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos.Rentals;
+using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
@@ -18,7 +19,6 @@ public class CompleteRentalService : ICompleteRentalService
     public CompleteRentalService(
         IBaseRepository<Rental> rentalRepo,
         IBaseRepository<Car> carRepo,
-        IBaseRepository<Service> serviceRepo,
         IMediator mediator)
     {
         _rentalRepo = rentalRepo;
@@ -36,7 +36,7 @@ public class CompleteRentalService : ICompleteRentalService
             throw new NotFoundException(nameof(Rental), rentalId);
 
         if (rental.Status != RentalStatus.Active)
-            throw new InvalidOperationException("Rental must be Active to be completed.");
+            throw new BusinessException("Rental must be Active to be completed.", string.Empty);
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
         // 1) Marcar como completado
         rental.Complete(actualReturnDate ?? today);

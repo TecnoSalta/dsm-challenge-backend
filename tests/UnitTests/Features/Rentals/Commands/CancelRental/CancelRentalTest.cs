@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PWC.Challenge.Application.Features.Cars.EventHandlers;
@@ -62,12 +62,12 @@ public class CancelRentalCommandHandlerIntegrationTests
         var car = new Car(carId, "Compact", "Mini", 100,CarStatus.Rented);
 
         ctx.Cars.Add(WithAudit(car));
-        ctx.Rentals.Add(WithAudit(new Rental(
+        ctx.Rentals.Add(WithAudit(Rental.CreateForTest(
             rentalId,
             customer,
             car,
             new DateOnly(2025, 10, 1),
-            new DateOnly(2025, 10, 5),40
+            new DateOnly(2025, 10, 5), 40
         )));
         await ctx.SaveChangesAsync();
 

@@ -141,8 +141,7 @@ public static class DependencyInjection
         {
             var originalService = new AvailabilityService(
                 sp.GetRequiredService<ICarRepository>(),
-                sp.GetRequiredService<IRentalRepository>(),
-                sp.GetRequiredService<IServiceRepository>());
+                sp.GetRequiredService<IRentalRepository>());
 
             var cacheService = sp.GetRequiredService<ICacheService>();
             var logger = sp.GetRequiredService<ILogger<CachedAvailabilityService>>();

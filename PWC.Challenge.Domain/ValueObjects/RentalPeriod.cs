@@ -15,9 +15,6 @@ public class RentalPeriod : ValueObject
         if (startDate >= endDate)
             throw new ArgumentException("End date must be after start date");
 
-        if (DurationDays < 1)
-            throw new ArgumentException("Rental period must be at least 1 day");
-
         StartDate = startDate;
         EndDate = endDate;
     }

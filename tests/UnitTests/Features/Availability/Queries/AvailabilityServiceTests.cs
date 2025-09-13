@@ -10,19 +10,16 @@ namespace PWC.Challenge.UnitTests.Domain.Services
     {
         private readonly Mock<ICarRepository> _carRepositoryMock;
         private readonly Mock<IRentalRepository> _rentalRepositoryMock;
-        private readonly Mock<IServiceRepository> _serviceRepositoryMock;
         private readonly AvailabilityService _service;
 
         public AvailabilityServiceTests()
         {
             _carRepositoryMock = new Mock<ICarRepository>();
             _rentalRepositoryMock = new Mock<IRentalRepository>();
-            _serviceRepositoryMock = new Mock<IServiceRepository>();
 
             _service = new AvailabilityService(
                 _carRepositoryMock.Object,
-                _rentalRepositoryMock.Object,
-                _serviceRepositoryMock.Object);
+                _rentalRepositoryMock.Object);
         }
 
         [Fact]
@@ -75,17 +72,12 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, CarStatus.Available);
+            car.AddService(startDate, 2); // Add a service that overlaps
 
             _carRepositoryMock
               .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
               .ReturnsAsync(car);
-
-
-            // Usar valores explícitos en lugar de parámetros opcionales
-            _serviceRepositoryMock.Setup(repo =>
-                repo.HasScheduledServicesAsync(carId, startDate, endDate))
-                .ReturnsAsync(true);
 
             // Act
             var result = await _service.IsCarAvailableAsync(carId, startDate, endDate);
@@ -108,11 +100,6 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(car);
 
-
-            // Usar valores explícitos
-            _serviceRepositoryMock.Setup(repo =>
-                repo.HasScheduledServicesAsync(carId, startDate, endDate))
-                .ReturnsAsync(false);
 
             // Usar null explícito para excludedRentalId
             _rentalRepositoryMock.Setup(repo =>
@@ -140,11 +127,6 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(car);
 
-            // Usar valores explícitos
-            _serviceRepositoryMock.Setup(repo =>
-                repo.HasScheduledServicesAsync(carId, startDate, endDate))
-                .ReturnsAsync(false);
-
             // Usar null explícito
             _rentalRepositoryMock.Setup(repo =>
                 repo.HasOverlappingRentalsAsync(carId, startDate, endDate, null))
@@ -153,7 +135,19 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             // Usar null explícito y fechas específicas
             _rentalRepositoryMock.Setup(repo =>
                 repo.GetOverlappingRentalsAsync(carId, previousDay, previousDay, null))
-                .ReturnsAsync(new List<Rental> { new Rental() });
+                .ReturnsAsync(() =>
+                {
+                    var customer = new Customer(Guid.NewGuid(), "Test", "Test", "test@test.com");
+                    var rentalCar = new Car(carId, "Sedan", "Toyota Camry", 50m);
+                    var rental = Rental.CreateForTest(
+                        Guid.NewGuid(),
+                        customer,
+                        rentalCar,
+                        previousDay.AddDays(-5), // Start date in the past
+                        previousDay, // End date is the previous day
+                        50m);
+                    return new List<Rental> { rental };
+                });
 
             // Act
             var result = await _service.IsCarAvailableAsync(carId, startDate, endDate);
@@ -176,10 +170,6 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             _carRepositoryMock
              .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(car);
-            // Usar valores explícitos
-            _serviceRepositoryMock.Setup(repo =>
-                repo.HasScheduledServicesAsync(carId, startDate, endDate))
-                .ReturnsAsync(false);
 
             // Usar null explícito
             _rentalRepositoryMock.Setup(repo =>
@@ -213,11 +203,6 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             _carRepositoryMock
                 .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(car);
-
-            // Usar valores explícitos
-            _serviceRepositoryMock.Setup(repo =>
-                repo.HasScheduledServicesAsync(carId, startDate, endDate))
-                .ReturnsAsync(false);
 
             // Usar excludedRentalId explícito
             _rentalRepositoryMock.Setup(repo =>

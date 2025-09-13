@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿﻿using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -34,15 +34,13 @@ public class CompleteRentalCommandHandlerTests
     {
         var rentalRepo = new BaseRepository<Rental>(ctx);
         var carRepo = new BaseRepository<Car>(ctx);
-        var serviceRepo = new BaseRepository<Service>(ctx);
-
         // Mock de MediatR
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        return new CompleteRentalService(rentalRepo, carRepo, serviceRepo, mediatorMock.Object);
+        return new CompleteRentalService(rentalRepo, carRepo, mediatorMock.Object);
     }
 
 
@@ -58,9 +56,9 @@ public class CompleteRentalCommandHandlerTests
         var customer = WithAudit(new Customer(Guid.NewGuid(), "User", "456 Other St", "foo@g.com"));
         var car = WithAudit(new Car(carId, "SUV", "Honda", 100, CarStatus.Available));
 
-        var rental = WithAudit(new Rental(rentalId, customer, car,
-                                          new DateOnly(2025, 9, 1),
-                                          new DateOnly(2025, 9, 10),45));
+        var rental = WithAudit(Rental.CreateForTest(rentalId, customer, car,
+                                                    new DateOnly(2025, 9, 1),
+                                                    new DateOnly(2025, 9, 10), 45));
         // rental no se activa
 
         ctx.Customers.Add(customer);

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using MediatR;
@@ -35,7 +35,7 @@ public class UpdateRentalCommandHandlerTests
         var rentalRepo = new BaseRepository<Rental>(ctx);
         var carRepo = new BaseRepository<Car>(ctx);
 
-        // Mock de MediatR
+        // Mock MediatR
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
@@ -53,13 +53,18 @@ public class UpdateRentalCommandHandlerTests
         var carId = Guid.NewGuid();
 
         var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
-        customer = WithAudit(customer);
+        ctx.Customers.Add(WithAudit(customer));
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
-
+        
         ctx.Cars.Add(WithAudit(car));
-        ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
-                                             new DateOnly(2025, 10, 1),
-                                             new DateOnly(2025, 10, 5),40)));
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var rental = WithAudit(Rental.CreateForTest(rentalId, customer, car,
+                                                    startDate,
+                                                    startDate.AddDays(5), 40));
+        // To be able to modify, the rental must be active.
+        rental.MarkAsActive();
+        ctx.Rentals.Add(rental);
+
         await ctx.SaveChangesAsync();
 
         var rentalService = CreateRentalService(ctx);
@@ -68,8 +73,8 @@ public class UpdateRentalCommandHandlerTests
         var cmd = new UpdateRentalCommand(
             rentalId,
             new UpdateRentalDto(
-                new DateOnly(2025, 10, 1),
-                new DateOnly(2025, 10, 10),
+                startDate,
+                startDate.AddDays(10),
                 null
             )
         );
@@ -79,8 +84,8 @@ public class UpdateRentalCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.StartDate.Should().Be(new DateOnly(2025, 10, 1));
-        result.EndDate.Should().Be(new DateOnly(2025, 10, 10));
+        result.StartDate.Should().Be(startDate);
+        result.EndDate.Should().Be(startDate.AddDays(10));
         result.Message.Should().Be("Rental updated successfully.");
     }
 
@@ -93,18 +98,24 @@ public class UpdateRentalCommandHandlerTests
         var carId = Guid.NewGuid();
 
         var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
-        customer = WithAudit(customer);
+        ctx.Customers.Add(WithAudit(customer));
+
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
         ctx.Cars.Add(WithAudit(car));
 
         var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave", "foo@g.com");
-        ctx.Rentals.Add(WithAudit(new Rental(Guid.NewGuid(), otherCustomer, car,
-                                             new DateOnly(2025, 10, 6),
-                                             new DateOnly(2025, 10, 10),40)));
+        ctx.Customers.Add(WithAudit(otherCustomer));
 
-        ctx.Rentals.Add(WithAudit(new Rental(rentalId, customer, car,
-                                             new DateOnly(2025, 10, 1),
-                                             new DateOnly(2025, 10, 5),40)));
+        ctx.Rentals.Add(WithAudit(Rental.CreateForTest(Guid.NewGuid(), otherCustomer, car,
+                                                       new DateOnly(2025, 10, 6),
+                                                       new DateOnly(2025, 10, 10), 40)));
+        
+        var rentalToUpdate = WithAudit(Rental.CreateForTest(rentalId, customer, car,
+                                                            new DateOnly(2025, 10, 1),
+                                                            new DateOnly(2025, 10, 5), 40));
+        rentalToUpdate.MarkAsActive();
+        ctx.Rentals.Add(rentalToUpdate);
+
         await ctx.SaveChangesAsync();
 
         var rentalService = CreateRentalService(ctx);
@@ -138,13 +149,13 @@ public class UpdateRentalCommandHandlerTests
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
-        var rentalEntity = WithAudit(new Rental(rentalId, customer, car,
-                                                new DateOnly(2025, 10, 1),
-                                                new DateOnly(2025, 10, 5),40));
+        var rentalEntity = WithAudit(Rental.CreateForTest(rentalId, customer, car,
+                                                          new DateOnly(2025, 10, 1),
+                                                          new DateOnly(2025, 10, 5), 40));
         ctx.Rentals.Add(rentalEntity);
         await ctx.SaveChangesAsync();
 
-        // Cancelamos la reserva usando CancelAsync con MediatR mock
+        // We cancel the reservation using CancelAsync with a MediatR mock
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
