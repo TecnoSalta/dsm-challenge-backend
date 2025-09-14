@@ -1,6 +1,7 @@
-﻿﻿﻿﻿using Microsoft.EntityFrameworkCore;
+﻿﻿﻿﻿﻿﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using PWC.Challenge.Infrastructure.Data.Seeding;
 
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
@@ -31,12 +32,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder); // Call base method first for Identity configurations
+
         var assembly = Assembly.GetExecutingAssembly();
         modelBuilder.ApplyConfigurationsFromAssembly(assembly);
         modelBuilder.ApplySeedDataFromAssembly(assembly);
         modelBuilder.SetExcludedEntitiesFromMigrations();
         modelBuilder.ApplyGlobalFilter<IEntity>(e => !e.IsDeleted);
-        base.OnModelCreating(modelBuilder);
+
+        // Seed Identity roles and admin user
+        modelBuilder.SeedRoles();
+        modelBuilder.SeedAdminUser();
     }
 
     public override async Task<int> SaveChangesAsync(
@@ -70,3 +76,4 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         return result;
     }
 }
+
