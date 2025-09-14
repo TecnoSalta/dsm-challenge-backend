@@ -34,6 +34,14 @@ internal class Program
         builder.Services.AddScoped<ICompleteRentalService, CompleteRentalService>();
         builder.Services.AddScoped<ICustomerService, CustomerService>();
 
+        builder.Services.AddHttpClient("DurableFunction", client =>
+        {
+            client.BaseAddress = new Uri("http://pwc.challenge.email.processor:7071");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        builder.Services.AddHttpClient();
+
 
 
         var app = builder.Build();

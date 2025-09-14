@@ -1,4 +1,6 @@
-﻿services:
+﻿version: '3.8'
+
+services:
   pwc.challenge.db:
     image: postgis/postgis:16-3.4-alpine
     container_name: pwc.challenge.db
@@ -57,7 +59,7 @@
     networks:
       - pwc_network
     volumes:
-      - azurite_data:/data 
+      - azurite-data:/data 
     command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data
     healthcheck:
       disable: true
@@ -114,7 +116,7 @@
       context: .
       dockerfile: Email.Processor/Dockerfile
     environment:
-      - AzureWebJobsStorage=UseDevelopmentStorage=true;DevelopmentStorageProxyUri=http://pwc.challenge.azurite
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://pwc.challenge.azurite:10000/devstoreaccount1;QueueEndpoint=http://pwc.challenge.azurite:10001/devstoreaccount1;TableEndpoint=http://pwc.challenge.azurite:10002/devstoreaccount1;
       - AzureWebJobsSecretStorageType=files
       - AzureFunctionsJobHost__Logging__Console__IsEnabled=true
       - ASPNETCORE_ENVIRONMENT=Development
@@ -149,7 +151,7 @@
 volumes:
   pwc.challenge.volume.postgres:
   redis_data:
-  azurite_data:
+  azurite-data:
 
 networks:
   pwc_network:
