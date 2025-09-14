@@ -1,4 +1,7 @@
-﻿﻿using Microsoft.EntityFrameworkCore;
+﻿﻿﻿﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Infrastructure.Data.Extensions;
@@ -10,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace PWC.Challenge.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     private readonly IMediator? _mediator;
 

@@ -6,6 +6,12 @@ using PWC.Challenge.Application.Services;
 using PWC.Challenge.Infrastructure;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Infrastructure.Data;
 
 
 internal class Program
@@ -28,6 +34,48 @@ internal class Program
             .AddApplicationServices(builder.Configuration)
             .AddApiServices(builder.Configuration, builder.Environment);
 
+        builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+        {
+            options.Password.RequireDigit = false;
+            options.Password.RequiredLength = 6;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireLowercase = false;
+        })
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+        var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["Secret"];
+        var issuer = jwtSettings["Issuer"];
+        var audience = jwtSettings["Audience"];
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = issuer,
+                ValidAudience = audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+            };
+        });
+
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("RequireCustomerRole", policy => policy.RequireRole("Customer"));
+            // Add other policies as needed
+        });
+
         builder.Services.AddScoped<IRentalService, RentalService>();
         builder.Services.AddScoped<ICompleteRentalService, CompleteRentalService>();
 
@@ -48,7 +96,10 @@ internal class Program
 
         // Configure the HTTP request pipeline.
 
-        app.UseApiServices(builder.Configuration, builder.Environment);
+                app.UseApiServices(builder.Configuration, builder.Environment);
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         if (app.Environment.IsDevelopment())
         {

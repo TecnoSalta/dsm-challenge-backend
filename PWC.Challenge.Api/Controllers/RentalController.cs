@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization; // Added
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
@@ -8,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PWC.Challenge.Api.Controllers;
 
+[Authorize] // Added
 [Route("api/[controller]")]
 [ApiController]
 public class RentalsController(
@@ -20,6 +22,7 @@ public class RentalsController(
     /// <summary>
     /// CU-04 – Modificar reserva activa
     /// </summary>
+    [Authorize(Roles = "Admin,Customer")] // Added
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(UpdatedRentalDto), 200)]
     [ProducesResponseType(400)]
@@ -66,6 +69,7 @@ public class RentalsController(
     /// <summary>
     /// CU-05 – Cancelar reserva activa
     /// </summary>
+    [Authorize(Roles = "Admin,Customer")] // Added
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
@@ -109,6 +113,7 @@ public class RentalsController(
     /// <summary>
     /// CU-06 – Completar una reserva activa
     /// </summary>
+    [Authorize(Roles = "Admin,Customer")] // Added
     [HttpPost("{id}/complete")]
     [ProducesResponseType(typeof(CompletedRentalDto), 200)]
     [ProducesResponseType(400)]

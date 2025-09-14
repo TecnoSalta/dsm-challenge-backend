@@ -86,6 +86,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IAuthService, AuthService>();
+        services.AddScoped<ITokenService, TokenService>(); // Added
 
         return services;
     }

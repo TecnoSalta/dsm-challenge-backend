@@ -1,4 +1,5 @@
 ﻿using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Domain.Entities;
 
@@ -21,6 +22,8 @@ public class Customer : Entity
     public string FullName { get; private set; } = null!;
     public string Address { get; private set; } = null!;
     public string Email { get; private set; } = null!;
+    public Guid UserId { get; set; }
+    public ApplicationUser User { get; set; } = null!;
 
     public void AddRental(Rental rental)
     {

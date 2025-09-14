@@ -1,6 +1,7 @@
 ﻿
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using PWC.Challenge.Api.Common.Controllers.Traditional;
 using PWC.Challenge.Application.Common;
 using PWC.Challenge.Application.Dtos;
@@ -9,6 +10,7 @@ using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Api.Controllers
 {
+    [Authorize]
     [Route("customers")]
     public class CustomersController:BaseWriteController<Customer,CustomerDto>
     {
@@ -23,6 +25,7 @@ namespace PWC.Challenge.Api.Controllers
             this.sender = sender;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create")]
         public  async Task<IActionResult> Create(CustomerDto dto)
         {
