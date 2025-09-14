@@ -1,29 +1,29 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Consulte https://aka.ms/customizecontainer para aprender a personalizar su contenedor de depuración y cómo Visual Studio usa este Dockerfile para compilar sus imágenes para una depuración más rápida.
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0 AS base
-# Instala las herramientas necesarias: npm para Azurite
-USER root
-RUN apt-get update && apt-get install -y npm
-RUN npm install -g azurite
-USER app
+# Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
+FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet8.0 AS base
 WORKDIR /home/site/wwwroot
-EXPOSE 7071 10000 10001 10002
+EXPOSE 8080
 
+
+# Esta fase se usa para compilar el proyecto de servicio
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Email.Processor/Email.Processor.csproj", "Email.Processor/"]
-RUN dotnet restore "Email.Processor/Email.Processor.csproj"
+RUN dotnet restore "./Email.Processor/Email.Processor.csproj"
 COPY . .
 WORKDIR "/src/Email.Processor"
-RUN dotnet build "Email.Processor.csproj" -c Release -o /app/build
+RUN dotnet build "./Email.Processor.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
+# Esta fase se usa para publicar el proyecto de servicio que se copiará en la fase final.
 FROM build AS publish
-RUN dotnet publish "Email.Processor.csproj" -c Release -o /app/publish /p:UseAppHost=false
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./Email.Processor.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
+# Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
 FROM base AS final
 WORKDIR /home/site/wwwroot
 COPY --from=publish /app/publish .
-COPY start.sh /
-RUN chmod +x /start.sh
-ENV AzureWebJobsScriptRoot=/home/site/wwwroot
-ENTRYPOINT ["/start.sh"]
+ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
+    AzureFunctionsJobHost__Logging__Console__IsEnabled=true

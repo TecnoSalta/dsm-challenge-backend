@@ -2,8 +2,13 @@
   "profiles": {
     "Email.Processor": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7052",
-      "launchBrowser": false
+      "commandLineArgs": "--port 7162"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 30664,
+      "useSSL": false
     }
   }
 }
