@@ -6,7 +6,9 @@ using PWC.Challenge.Domain.ValueObjects;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using PWC.Challenge.Application.Common.Exceptions; // Assuming this path for BusinessException
+using PWC.Challenge.Application.Exceptions;
+using PWC.Challenge.Domain.Services;
+using PWC.Challenge.Common.Exceptions; // Added for IRentalAvailabilityService
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;
 
@@ -15,65 +17,60 @@ public class CreateRentalCommandHandler : IRequestHandler<CreateRentalCommand, C
     private readonly IRentalRepository _rentalRepository;
     private readonly ICarRepository _carRepository;
     private readonly ICustomerRepository _customerRepository;
+    private readonly IRentalAvailabilityService _rentalAvailabilityService; // Injected
 
     public CreateRentalCommandHandler(
         IRentalRepository rentalRepository,
         ICarRepository carRepository,
-        ICustomerRepository customerRepository)
+        ICustomerRepository customerRepository,
+        IRentalAvailabilityService rentalAvailabilityService) // Added to constructor
     {
         _rentalRepository = rentalRepository;
         _carRepository = carRepository;
         _customerRepository = customerRepository;
+        _rentalAvailabilityService = rentalAvailabilityService; // Initialized
     }
 
     public async Task<CreatedRentalDto> Handle(CreateRentalCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validate dates
-        if (request.StartDate >= request.EndDate)
-        {
-            throw new BusinessException("Start date must be before end date.");
-        }
+        // Input validation (dates) is handled by CreateRentalCommandValidator
 
-        if (request.StartDate < DateOnly.FromDateTime(DateTime.Today))
-        {
-            throw new BusinessException("Start date cannot be in the past.");
-        }
-
-        // 2. Check if Customer exists
+        // 1. Check if Customer exists
         var customer = await _customerRepository.GetByIdAsync(request.CustomerId, asNoTracking: true, cancellationToken);
         if (customer == null)
         {
             throw new NotFoundException($"Customer with ID {request.CustomerId} not found.");
         }
 
-        // 3. Check if Car exists
-        var car = await _carRepository.GetByIdAsync(request.CarId, asNoTracking: true, cancellationToken);
+        // 2. Check if Car exists and get its details (including DailyRate)
+        // We need to fetch the Car entity with tracking to ensure its properties are available for Rental.Create
+        var car = await _carRepository.GetByIdAsync(request.CarId, asNoTracking: false, cancellationToken);
         if (car == null)
         {
             throw new NotFoundException($"Car with ID {request.CarId} not found.");
         }
 
-        // 4. Check car availability
-        var isCarAvailable = await _carRepository.IsCarAvailableAsync(request.CarId, request.StartDate, request.EndDate, null);
+        // 3. Check car availability using the Domain Service
+        var isCarAvailable = await _rentalAvailabilityService.IsCarAvailableAsync(request.CarId, request.StartDate, request.EndDate, null, cancellationToken);
         if (!isCarAvailable)
         {
-            throw new BusinessException($"Car {car.Model} is not available for the selected period.");
+            throw new BusinessException("CarAvailability", $"Car {car.Model} is not available for the selected period.");
         }
 
-        // 5. Create Rental entity
-        var rental = new Rental
-        {
-            Id = Guid.NewGuid(),
-            CustomerId = request.CustomerId,
-            CarId = request.CarId,
-            RentalPeriod = new RentalPeriod(request.StartDate, request.EndDate),
-            Status = RentalStatus.Pending // Initial status
-        };
+        // 4. Create Rental entity using the factory method
+        var rental = Rental.Create(
+            Guid.NewGuid(),
+            customer, // Pass the Customer entity
+            car,      // Pass the Car entity
+            request.StartDate,
+            request.EndDate,
+            car.DailyRate // Use the DailyRate from the fetched Car
+        );
 
-        // 6. Add rental to repository
+        // 5. Add rental to repository
         await _rentalRepository.AddAsync(rental, true, cancellationToken);
 
-        // 7. Map to DTO and return
+        // 6. Map to DTO and return
         return new CreatedRentalDto
         {
             Id = rental.Id,

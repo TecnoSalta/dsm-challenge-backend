@@ -1,11 +1,10 @@
-﻿﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using MediatR;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
-using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
@@ -31,7 +30,8 @@ public class UpdateRentalCommandHandlerTests
         return entity;
     }
 
-    private static RentalService CreateRentalService(ApplicationDbContext ctx)
+    // Modified: Renamed and changed return type
+    private static (IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator, IAvailabilityService availabilityService) CreateHandlerDependencies(ApplicationDbContext ctx, bool isCarAvailable = true)
     {
         var rentalRepo = new BaseRepository<Rental>(ctx);
         var carRepo = new BaseRepository<Car>(ctx);
@@ -43,9 +43,9 @@ public class UpdateRentalCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var availabilityServiceMock = new Mock<IAvailabilityService>();
-        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>())).ReturnsAsync(true);
+        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>())).ReturnsAsync(isCarAvailable);
 
-        return new RentalService(rentalRepo, carRepo, mediatorMock.Object, availabilityServiceMock.Object);
+        return (rentalRepo, carRepo, mediatorMock.Object, availabilityServiceMock.Object);
     }
 
     [Fact]
@@ -71,8 +71,9 @@ public class UpdateRentalCommandHandlerTests
 
         await ctx.SaveChangesAsync();
 
-        var rentalService = CreateRentalService(ctx);
-        var handler = new UpdateRentalCommandHandler(rentalService);
+        // Modified: Get dependencies from helper method
+        var (rentalRepo, carRepo, mediator, availabilityService) = CreateHandlerDependencies(ctx);
+        var handler = new UpdateRentalCommandHandler(rentalRepo, carRepo, mediator, availabilityService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
@@ -124,13 +125,9 @@ public class UpdateRentalCommandHandlerTests
 
         await ctx.SaveChangesAsync();
 
-        // Arrange: Mock availability service to return false for this specific test
-        var availabilityServiceMock = new Mock<IAvailabilityService>();
-        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>())).ReturnsAsync(false);
-        var mediatorMock = new Mock<IMediator>();
-
-        var rentalService = new RentalService(new BaseRepository<Rental>(ctx), new BaseRepository<Car>(ctx), mediatorMock.Object, availabilityServiceMock.Object);
-        var handler = new UpdateRentalCommandHandler(rentalService);
+        // Modified: Get dependencies from helper method, setting isCarAvailable to false
+        var (rentalRepo, carRepo, mediator, availabilityService) = CreateHandlerDependencies(ctx, isCarAvailable: false);
+        var handler = new UpdateRentalCommandHandler(rentalRepo, carRepo, mediator, availabilityService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
@@ -171,16 +168,13 @@ public class UpdateRentalCommandHandlerTests
         mediatorMock
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        await rentalEntity.CancelAsync(mediatorMock.Object);
+        // Modified: Call Cancel directly on the entity
+        rentalEntity.Cancel();
         await ctx.SaveChangesAsync();
 
-        var availabilityServiceMock = new Mock<IAvailabilityService>();
-
-        var rentalService = new RentalService(new BaseRepository<Rental>(ctx),
-                                              new BaseRepository<Car>(ctx),
-                                              mediatorMock.Object,
-                                              availabilityServiceMock.Object);
-        var handler = new UpdateRentalCommandHandler(rentalService);
+        // Modified: Get dependencies from helper method
+        var (rentalRepo, carRepo, mediator, availabilityService) = CreateHandlerDependencies(ctx);
+        var handler = new UpdateRentalCommandHandler(rentalRepo, carRepo, mediator, availabilityService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
@@ -220,8 +214,9 @@ public class UpdateRentalCommandHandlerTests
         ctx.Rentals.Add(rental);
         await ctx.SaveChangesAsync();
 
-        var rentalService = CreateRentalService(ctx);
-        var handler = new UpdateRentalCommandHandler(rentalService);
+        // Modified: Get dependencies from helper method
+        var (rentalRepo, carRepo, mediator, availabilityService) = CreateHandlerDependencies(ctx);
+        var handler = new UpdateRentalCommandHandler(rentalRepo, carRepo, mediator, availabilityService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,
@@ -268,13 +263,9 @@ public class UpdateRentalCommandHandlerTests
         ctx.Rentals.Add(rental);
         await ctx.SaveChangesAsync();
 
-        // Arrange: Mock availability service to return false for this specific test
-        var availabilityServiceMock = new Mock<IAvailabilityService>();
-        availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(newCar.Id, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), rentalId)).ReturnsAsync(false);
-        var mediatorMock = new Mock<IMediator>();
-
-        var rentalService = new RentalService(new BaseRepository<Rental>(ctx), new BaseRepository<Car>(ctx), mediatorMock.Object, availabilityServiceMock.Object);
-        var handler = new UpdateRentalCommandHandler(rentalService);
+        // Modified: Get dependencies from helper method, setting isCarAvailable to false
+        var (rentalRepo, carRepo, mediator, availabilityService) = CreateHandlerDependencies(ctx, isCarAvailable: false);
+        var handler = new UpdateRentalCommandHandler(rentalRepo, carRepo, mediator, availabilityService);
 
         var cmd = new UpdateRentalCommand(
             rentalId,

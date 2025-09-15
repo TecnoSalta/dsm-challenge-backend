@@ -1,10 +1,9 @@
-﻿﻿using MediatR;
-using PWC.Challenge.Domain.Common;
+﻿using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Events.Rentals;
 using PWC.Challenge.Domain.Exceptions;
 using PWC.Challenge.Domain.ValueObjects;
-using PWC.Challenge.Domain.Services;
+using PWC.Challenge.Domain.Services; // Keep this if IsInServicePeriod is used
 
 namespace PWC.Challenge.Domain.Entities;
 
@@ -26,11 +25,12 @@ public class Rental : AggregateRoot
     // Private constructor for EF Core
     private Rental() { }
 
-    // Public constructor
-    private Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate, bool skipValidation = false)
+    // Protected constructor for internal use by factory method and EF Core
+    protected Rental(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)
     {
+        // Initial validations that don't require external services
         ValidateRentalPeriod(startDate, endDate);
-        ValidateCarAvailability(car, startDate, endDate);
+        // ValidateCarAvailability is moved out of here, as it requires external service (repository)
 
         Id = id;
         Customer = customer ?? throw new ArgumentNullException(nameof(customer));
@@ -39,14 +39,23 @@ public class Rental : AggregateRoot
         CarId = car.Id;
         DailyRate = dailyRate;
         RentalPeriod = RentalPeriod.Create(startDate, endDate);
-        TotalCost = CalculateTotalCost(dailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
+        TotalCost = CalculateTotalCost(dailyRate, RentalPeriod.DurationDays);
         Status = RentalStatus.Confirmed;
 
         AddDomainEvent(new RentalCreatedDomainEvent(Id, CarId, CustomerId, startDate, endDate));
     }
 
+    // Factory method
+    public static Rental Create(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)
+    {
+        // Perform validations that are part of the entity's invariant
+        var rental = new Rental(id, customer, car, startDate, endDate, dailyRate);
+        // Additional domain-specific validations can go here if needed before returning
+        return rental;
+    }
+
     // Business methods
-    public async Task CancelAsync(IMediator mediator)
+    public void Cancel()
     {
         if (Status != RentalStatus.Confirmed && Status != RentalStatus.Active)
             throw new RentalOperationException("Only confirmed or active rentals can be cancelled.");
@@ -56,8 +65,7 @@ public class Rental : AggregateRoot
 
         Status = RentalStatus.Cancelled;
 
-        var domainEvent = new RentalCancelledDomainEvent(Id, CarId, CustomerId);
-        await mediator.Publish(domainEvent);
+        AddDomainEvent(new RentalCancelledDomainEvent(Id, CarId, CustomerId));
     }
 
     public void UpdateRentalDates(DateOnly newStartDate, DateOnly newEndDate)
@@ -66,10 +74,10 @@ public class Rental : AggregateRoot
             throw new RentalOperationException("Only confirmed or active rentals can be modified.");
 
         ValidateRentalPeriod(newStartDate, newEndDate);
-        ValidateCarAvailability(Car, newStartDate, newEndDate, Id);
+        // ValidateCarAvailability is moved out of here
 
         RentalPeriod = RentalPeriod.Create(newStartDate, newEndDate);
-        TotalCost = CalculateTotalCost(DailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
+        TotalCost = CalculateTotalCost(DailyRate, RentalPeriod.DurationDays);
 
         AddDomainEvent(new RentalUpdatedDomainEvent(Id, CarId, newStartDate, newEndDate));
     }
@@ -79,12 +87,12 @@ public class Rental : AggregateRoot
         if (Status != RentalStatus.Confirmed && Status != RentalStatus.Active)
             throw new RentalOperationException("Only confirmed or active rentals can be modified.");
 
-        ValidateCarAvailability(newCar, RentalPeriod.StartDate, RentalPeriod.EndDate, Id);
+        // ValidateCarAvailability is moved out of here
 
         Car = newCar;
         CarId = newCar.Id;
         DailyRate = newDailyRate;
-        TotalCost = CalculateTotalCost(newDailyRate, RentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
+        TotalCost = CalculateTotalCost(newDailyRate, RentalPeriod.DurationDays);
 
         AddDomainEvent(new RentalCarChangedDomainEvent(Id, CarId, newCar.Id));
     }
@@ -113,16 +121,12 @@ public class Rental : AggregateRoot
         Status = RentalStatus.Completed;
         ActualReturnDate = actualReturnDate;
 
-        // Calculate any additional charges for late return or discounts for early return        
         var actualRentalPeriod = RentalPeriod.Create(RentalPeriod.StartDate, actualReturnDate);
 
-        // If the actual rental period differs from the planned period, raise event
-        if (actualRentalPeriod.DurationDays != RentalPeriod.DurationDays) // CAMBIADO: Days → DurationDays
+        if (actualRentalPeriod.DurationDays != RentalPeriod.DurationDays)
         {
-            AddDomainEvent(new RentalPeriodChangedDomainEvent(Id, actualRentalPeriod.DurationDays)); // CAMBIADO: Days → DurationDays
-
-            // Recalculate cost based on actual rental period
-            TotalCost = CalculateTotalCost(DailyRate, actualRentalPeriod.DurationDays); // CAMBIADO: Days → DurationDays
+            AddDomainEvent(new RentalPeriodChangedDomainEvent(Id, actualRentalPeriod.DurationDays));
+            TotalCost = CalculateTotalCost(DailyRate, actualRentalPeriod.DurationDays);
         }
 
         AddDomainEvent(new RentalCompletedDomainEvent(Id, CarId, CustomerId, actualReturnDate));
@@ -140,8 +144,6 @@ public class Rental : AggregateRoot
 
             var lateFee = lateDays * lateFeePerDay;
             TotalCost += lateFee;
-            //TODO: Implementar handlers y resto de logica de esta parte.
-            //AddDomainEvent(new LateFeeAppliedDomainEvent(Id, lateDays, lateFee));
         }
     }
 
@@ -159,38 +161,26 @@ public class Rental : AggregateRoot
             throw new RentalOperationException($"Rental period cannot exceed {maxRentalPeriod.TotalDays} days.");
     }
 
-    private void ValidateCarAvailability(Car car, DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)
-    {
-        if (car.IsInServicePeriod(startDate, endDate))
-            throw new RentalOperationException("Car is not available due to scheduled service.");
-
-        // Additional availability checks would be implemented here
-    }
-
     // Helper methods
     private decimal CalculateTotalCost(decimal dailyRate, int days)
     {
-        // Apply business rules for pricing
         if (days > 7)
         {
-            // Weekly discount
             return dailyRate * days * 0.9m;
         }
         else if (days > 14)
         {
-            // Bi-weekly discount
             return dailyRate * days * 0.85m;
         }
         else if (days > 28)
         {
-            // Monthly discount
             return dailyRate * days * 0.8m;
         }
 
         return dailyRate * days;
     }
 
-    // Factory method for testing
+    // Factory method for testing - this can be removed or kept if still needed for specific testing scenarios
     public static Rental CreateForTest(Guid id, Customer customer, Car car, DateOnly startDate, DateOnly endDate, decimal dailyRate)
     {
         var rental = new Rental { Id = id, Customer = customer, Car = car, DailyRate = dailyRate, Status = RentalStatus.Confirmed };

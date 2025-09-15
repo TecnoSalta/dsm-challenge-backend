@@ -1,16 +1,18 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization; // Added
+using Microsoft.AspNetCore.Authorization; 
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 using System.ComponentModel.DataAnnotations;
-using PWC.Challenge.Application.Features.Rentals.Commands.CreateRental; // Added for CreateRental
+using PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;
+using PWC.Challenge.Application.Exceptions;
+using PWC.Challenge.Common.Exceptions;
 
 namespace PWC.Challenge.Api.Controllers;
 
-[Authorize] // Added
+[Authorize] 
 [Route("api/[controller]")]
 [ApiController]
 public class RentalsController(
@@ -40,7 +42,7 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} registrada exitosamente", response.Id);
-            return CreatedAtAction(nameof(GetRentalById), new { id = response.Id }, response); // Assuming a GetRentalById exists or will exist
+            return CreatedAtAction("created", new { id = response.Id }, response); // Assuming a GetRentalById exists or will exist
         }
         catch (ValidationException ex)
         {
@@ -171,13 +173,7 @@ public class RentalsController(
 
         try
         {
-            if (id != dto.RentalId)
-            {
-                _logger.LogWarning("ID de URL ({UrlId}) no coincide con ID del cuerpo ({BodyId})", id, dto.RentalId);
-                return BadRequest("El id de la URL no coincide con el cuerpo.");
-            }
-
-            var command = new CompleteRentalCommand(dto.RentalId);
+            var command = new CompleteRentalCommand(id, dto.RentalId);
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} completada exitosamente", id);
@@ -192,11 +188,6 @@ public class RentalsController(
         {
             _logger.LogWarning(ex, "Reserva no encontrada con ID: {RentalId}", id);
             return NotFound(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Operación inválida al completar reserva con ID: {RentalId}", id);
-            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {

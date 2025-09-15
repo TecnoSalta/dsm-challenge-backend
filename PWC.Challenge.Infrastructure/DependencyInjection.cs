@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -114,12 +114,10 @@ public static class DependencyInjection
         var repositoryInterfaces = domainAssembly.GetExportedTypes()
             .Where(t => t.IsInterface && !t.IsGenericTypeDefinition &&
                         (t.GetInterfaces().Any(i => i.IsGenericType &&
-                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>)))))
-            .ToList();
+                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>))))).ToList();
 
         var repositoryImplementations = infrastructureAssembly.GetExportedTypes()
-            .Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition && t.IsClass)
-            .ToList();
+            .Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition && t.IsClass).ToList();
 
         foreach (var repositoryInterface in repositoryInterfaces)
         {
@@ -149,6 +147,9 @@ public static class DependencyInjection
 
             return new CachedAvailabilityService(originalService, cacheService, logger);
         });
+
+        // Register RentalAvailabilityService
+        services.AddScoped<IRentalAvailabilityService, RentalAvailabilityService>();
 
         return services;
     }
