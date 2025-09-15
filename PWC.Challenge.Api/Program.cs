@@ -1,7 +1,5 @@
 using PWC.Challenge.Api;
 using PWC.Challenge.Application;
-using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental.Services;
-using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Infrastructure;
 using System.Text.Json;
@@ -76,10 +74,6 @@ internal class Program
             // Add other policies as needed
         });
 
-        builder.Services.AddScoped<IRentalService, RentalService>();
-        builder.Services.AddScoped<ICompleteRentalService, CompleteRentalService>();
-
-        builder.Services.AddScoped<ICompleteRentalService, CompleteRentalService>();
         builder.Services.AddScoped<ICustomerService, CustomerService>();
 
         builder.Services.AddHttpClient("DurableFunction", client =>

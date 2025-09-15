@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Exceptions;
+using PWC.Challenge.Common.Exceptions;
+
 // Removed: using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;

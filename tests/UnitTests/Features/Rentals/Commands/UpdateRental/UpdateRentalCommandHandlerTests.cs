@@ -31,7 +31,7 @@ public class UpdateRentalCommandHandlerTests
     }
 
     // Modified: Renamed and changed return type
-    private static (IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator, IAvailabilityService availabilityService) CreateHandlerDependencies(ApplicationDbContext ctx, bool isCarAvailable = true)
+    private static (IBaseRepository<Rental> rentalRepo, IBaseRepository<Car> carRepo, IMediator mediator, IRentalAvailabilityService availabilityService) CreateHandlerDependencies(ApplicationDbContext ctx, bool isCarAvailable = true)
     {
         var rentalRepo = new BaseRepository<Rental>(ctx);
         var carRepo = new BaseRepository<Car>(ctx);
@@ -42,7 +42,7 @@ public class UpdateRentalCommandHandlerTests
             .Setup(m => m.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var availabilityServiceMock = new Mock<IAvailabilityService>();
+        var availabilityServiceMock = new Mock<IRentalAvailabilityService>();
         availabilityServiceMock.Setup(s => s.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>())).ReturnsAsync(isCarAvailable);
 
         return (rentalRepo, carRepo, mediatorMock.Object, availabilityServiceMock.Object);

@@ -33,4 +33,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Rentals\Commands\CancelRental\" />
+    <Folder Include="Features\Rentals\Commands\CompleteRental\" />
+  </ItemGroup>
+
 </Project>
