@@ -16,7 +16,7 @@ public class GetCustomerByDniQueryHandler : IRequestHandler<GetCustomerByDniQuer
 
     public async Task<CustomerDto?> Handle(GetCustomerByDniQuery request, CancellationToken cancellationToken)
     {
-        var customer = await _customerRepository.GetByDniAsync(request.Dni);
+        var customer = await _customerRepository.GetByDniAsync(request.Dni,cancellationToken);
 
         return customer?.Adapt<CustomerDto>();
     }

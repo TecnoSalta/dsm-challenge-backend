@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Domain.Entities;
+using System.Net;
 
 namespace PWC.Challenge.Infrastructure.Data.Seeding;
 
@@ -11,12 +12,12 @@ public class CustomerSeed : ISeedData
     {
         var createdAt = DateTime.MinValue;
         var createdBy = "Anonymous";
-
+   
         var fooCustomer = new Customer(
-            Customer.FooId,
-            "SuperAdmin", "Address 1234","foo@g.com"
-        )
-        {
+                Customer.FooId,"123456789",
+                "SuperAdmin", "Address 1234","foo@g.com"
+            )
+            {
             CreatedAt = createdAt,
             CreatedBy = createdBy
         };

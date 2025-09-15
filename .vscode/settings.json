@@ -1,5 +1,5 @@
 {
-    "azureFunctions.deploySubpath": "Email.Processor/bin/Release/net48/publish",
+    "azureFunctions.deploySubpath": "Email.Processor/bin/Release/net8.0/publish",
     "azureFunctions.projectLanguage": "C#",
     "azureFunctions.projectRuntime": "~4",
     "debug.internalConsoleOptions": "neverOpen",

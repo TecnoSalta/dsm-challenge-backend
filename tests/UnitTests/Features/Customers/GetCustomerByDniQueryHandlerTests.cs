@@ -23,7 +23,7 @@ public class GetCustomerByDniQueryHandlerTests
         // Arrange
         var dni = "1122";
         var customer = new Customer(Guid.NewGuid(), dni, "Juan Pérez", "Av. Siempreviva 742", "juan.perez@example.com");
-        _customerRepositoryMock.Setup(repo => repo.GetByDniAsync(dni)).ReturnsAsync(customer);
+        _customerRepositoryMock.Setup(repo => repo.GetByDniAsync(dni,CancellationToken.None)).ReturnsAsync(customer);
 
         var query = new GetCustomerByDniQuery(dni);
 
@@ -42,7 +42,7 @@ public class GetCustomerByDniQueryHandlerTests
     {
         // Arrange
         var dni = "9999";
-        _customerRepositoryMock.Setup(repo => repo.GetByDniAsync(dni)).ReturnsAsync((Customer?)null);
+        _customerRepositoryMock.Setup(repo => repo.GetByDniAsync(dni,CancellationToken.None)).ReturnsAsync((Customer?)null);
 
         var query = new GetCustomerByDniQuery(dni);
 

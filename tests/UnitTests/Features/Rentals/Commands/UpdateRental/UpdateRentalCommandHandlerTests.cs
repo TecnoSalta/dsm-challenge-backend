@@ -56,7 +56,7 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
         
@@ -102,13 +102,13 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
         ctx.Cars.Add(WithAudit(car));
 
-        var otherCustomer = new Customer(Guid.NewGuid(), "Other User", "456 Test Ave", "foo@g.com");
+        var otherCustomer = new Customer(Guid.NewGuid(), "123456789","Other User", "456 Test Ave", "foo@g.com");
         ctx.Customers.Add(WithAudit(otherCustomer));
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -152,7 +152,7 @@ public class UpdateRentalCommandHandlerTests
         var rentalId = Guid.NewGuid();
         var carId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         customer = WithAudit(customer);
         var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
 
@@ -198,7 +198,7 @@ public class UpdateRentalCommandHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
         var rentalId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
         var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
@@ -247,7 +247,7 @@ public class UpdateRentalCommandHandlerTests
         await using var ctx = new ApplicationDbContext(NewInMemContext());
         var rentalId = Guid.NewGuid();
 
-        var customer = new Customer(Guid.NewGuid(), "Test User", "123 Test St", "foo@g.com");
+        var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
         var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
