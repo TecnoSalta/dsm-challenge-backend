@@ -137,7 +137,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
                 repo.GetOverlappingRentalsAsync(carId, previousDay, previousDay, null))
                 .ReturnsAsync(() =>
                 {
-                    var customer = new Customer(Guid.NewGuid(), "Test", "Test", "test@test.com");
+                    var customer = new Customer(Guid.NewGuid(), "123456789", "Test", "Test", "test@test.com");
                     var rentalCar = new Car(carId, "Sedan", "Toyota Camry", 50m);
                     var rental = Rental.CreateForTest(
                         Guid.NewGuid(),

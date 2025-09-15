@@ -11,14 +11,16 @@ public class Customer : Entity
 
     public Customer() { }
 
-    public Customer(Guid id, string fullName, string address, string email)
+    public Customer(Guid id, string dni, string fullName, string address, string email)
     {
         Id = id;
+        Dni = dni ?? throw new ArgumentNullException(nameof(dni));
         FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
         Address = address ?? throw new ArgumentNullException(nameof(address));
         Email = email ?? throw new ArgumentNullException(nameof(email));
     }
 
+    public string Dni { get; private set; } = null!;
     public string FullName { get; private set; } = null!;
     public string Address { get; private set; } = null!;
     public string Email { get; private set; } = null!;

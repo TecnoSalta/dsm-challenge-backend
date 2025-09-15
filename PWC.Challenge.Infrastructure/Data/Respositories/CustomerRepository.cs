@@ -1,7 +1,7 @@
-﻿using PWC.Challenge.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Infrastructure.Data.Common;
-
 
 namespace PWC.Challenge.Infrastructure.Data.Respositories;
 
@@ -12,7 +12,8 @@ public class CustomerRepository : BaseRepository<Customer>, ICustomerRepository
     {
     }
 
- 
-
-   
+    public async Task<Customer?> GetByDniAsync(string dni)
+    {
+        return await _context.Customers.FirstOrDefaultAsync(c => c.Dni == dni);
+    }
 }
