@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization; // Added
 using PWC.Challenge.Application.Dtos.Rentals;
@@ -6,6 +6,7 @@ using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental;
 using System.ComponentModel.DataAnnotations;
+using PWC.Challenge.Application.Features.Rentals.Commands.CreateRental; // Added for CreateRental
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -18,6 +19,50 @@ public class RentalsController(
 {
     private readonly ILogger<RentalsController> _logger = logger;
     private readonly ISender _sender = sender;
+
+    /// <summary>
+    /// CU-01 – Registrar una nueva reserva
+    /// </summary>
+    [Authorize(Roles = "Admin,Customer")]
+    [HttpPost]
+    [ProducesResponseType(typeof(CreatedRentalDto), 201)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> CreateRental(
+        [FromBody] CreateRentalDto dto,
+        CancellationToken ct)
+    {
+        _logger.LogInformation("Iniciando registro de nueva reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+
+        try
+        {
+            var command = new CreateRentalCommand(dto.CustomerId, dto.CarId, dto.StartDate, dto.EndDate);
+            var response = await _sender.Send(command, ct);
+
+            _logger.LogInformation("Reserva con ID: {RentalId} registrada exitosamente", response.Id);
+            return CreatedAtAction(nameof(GetRentalById), new { id = response.Id }, response); // Assuming a GetRentalById exists or will exist
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning(ex, "Error de validación al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            return BadRequest(ex.Message);
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Recurso no encontrado al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            return NotFound(ex.Message);
+        }
+        catch (BusinessException ex)
+        {
+            _logger.LogWarning(ex, "Regla de negocio violada al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
 
     /// <summary>
     /// CU-04 – Modificar reserva activa
@@ -40,8 +85,7 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} actualizada exitosamente", id);
-            if (response != null) { 
-            }
+           
             return Ok(response);
         }
         catch (ValidationException ex)
