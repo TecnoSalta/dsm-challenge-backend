@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PWC.Challenge.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PWC.Challenge.Infrastructure.Data;
 namespace PWC.Challenge.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250914235623_LinkFooCustomerToAdminUser")]
+    partial class LinkFooCustomerToAdminUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,7 +262,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                         {
                             Id = new Guid("a0b0c0d0-e0f0-0000-0000-000000000001"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "3021c494-e085-4ac3-ae1c-685c45745ab3",
+                            ConcurrencyStamp = "f26410f1-a1b1-46ff-8e1e-4c841c88ca9b",
                             Email = "admin@pwc.challenge.com",
                             EmailConfirmed = true,
                             FirstName = "Admin",
@@ -267,7 +270,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@PWC.CHALLENGE.COM",
                             NormalizedUserName = "ADMIN@PWC.CHALLENGE.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEK8DhuU72y6cGNKphj45XEy1Q4Qh8mXZ9Eh0Frwl7tUfR7dl49xXGvKAnfDa2UGfmw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECNB9ZMjRokz/IE4KNbQW6JXoFLOKmJq0bzWUW/04IxnNId5cYoKZldUakZcx12WwQ==",
                             PhoneNumberConfirmed = false,
                             RefreshTokenExpiryTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             TwoFactorEnabled = false,

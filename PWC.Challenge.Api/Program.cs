@@ -1,4 +1,4 @@
-﻿using PWC.Challenge.Api;
+using PWC.Challenge.Api;
 using PWC.Challenge.Application;
 using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental.Services;
 using PWC.Challenge.Application.Features.Rentals.Commands.UpdateRental.Services;
@@ -90,6 +90,17 @@ internal class Program
 
         builder.Services.AddHttpClient();
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(name: "AllowSpecificOrigin",
+                              builder =>
+                              {
+                                  builder.WithOrigins("http://localhost:4200")
+                                         .AllowAnyHeader()
+                                         .AllowAnyMethod();
+                              });
+        });
+
 
 
         var app = builder.Build();
@@ -97,6 +108,8 @@ internal class Program
         // Configure the HTTP request pipeline.
 
                 app.UseApiServices(builder.Configuration, builder.Environment);
+
+        app.UseCors("AllowSpecificOrigin");
 
         app.UseAuthentication();
         app.UseAuthorization();

@@ -47,8 +47,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                 name: "UserId",
                 table: "Customers",
                 type: "uuid",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
@@ -199,18 +198,10 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "Id",
-                keyValue: new Guid("ef1112d6-3447-49e7-8783-7d18d67cd073"),
-                column: "UserId",
-                value: new Guid("00000000-0000-0000-0000-000000000000"));
-
             migrationBuilder.CreateIndex(
                 name: "IX_Customers_UserId",
                 table: "Customers",
-                column: "UserId",
-                unique: true);
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -255,7 +246,7 @@ namespace PWC.Challenge.Infrastructure.Data.Migrations
                 column: "UserId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
