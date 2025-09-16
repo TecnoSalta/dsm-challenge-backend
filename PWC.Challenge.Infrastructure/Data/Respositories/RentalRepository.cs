@@ -16,7 +16,7 @@ public class RentalRepository : BaseRepository<Rental>, IRentalRepository
     {
         var query = Context.Set<Rental>()
             .Where(r => r.CarId == carId &&
-                       r.Status == RentalStatus.Active &&
+                       r.Status != RentalStatus.Cancelled &&
                        r.RentalPeriod.StartDate < endDate &&
                        r.RentalPeriod.EndDate > startDate);
 
@@ -30,9 +30,21 @@ public class RentalRepository : BaseRepository<Rental>, IRentalRepository
     {
         var query = Context.Set<Rental>()
             .Where(r => r.CarId == carId &&
-                       r.Status == RentalStatus.Active &&
+                       r.Status != RentalStatus.Cancelled &&
                        r.RentalPeriod.StartDate < endDate &&
                        r.RentalPeriod.EndDate > startDate);
+
+        if (excludedRentalId.HasValue)
+            query = query.Where(r => r.Id != excludedRentalId.Value);
+
+        return await query.ToListAsync();
+    }
+    public async Task<List<Rental>> GetRentalsByEndDateAsync(Guid carId, DateOnly endDate, Guid? excludedRentalId = null)
+    {
+        var query = Context.Set<Rental>()
+            .Where(r => r.CarId == carId &&
+                        r.RentalPeriod.EndDate == endDate &&
+                        r.Status != RentalStatus.Cancelled);
 
         if (excludedRentalId.HasValue)
             query = query.Where(r => r.Id != excludedRentalId.Value);

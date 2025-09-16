@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain;
 using PWC.Challenge.Domain.Common;
@@ -13,6 +14,7 @@ using PWC.Challenge.Domain.Services;
 using PWC.Challenge.Infrastructure.Configurations;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
+using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Infrastructure.Services;
 using StackExchange.Redis;
 using System.Reflection;
@@ -68,14 +70,12 @@ public static class DependencyInjection
                 return ConnectionMultiplexer.Connect(config);
             });
 
-            // ✅ Registrar servicio de cache con la interfaz de Application
             services.AddSingleton<ICacheService, RedisCacheService>();
         }
         else
         {
             // Fallback a memoria si Redis no está configurado
             services.AddDistributedMemoryCache();
-            // ✅ Registrar servicio de cache con la interfaz de Application
             services.AddSingleton<ICacheService, InMemoryCacheService>();
         }
 
@@ -150,6 +150,9 @@ public static class DependencyInjection
 
         // Register RentalAvailabilityService
         services.AddScoped<IRentalAvailabilityService, RentalAvailabilityService>();
+
+        // Register Clock Service
+        services.AddSingleton<IClock, SystemClock>();
 
         return services;
     }

@@ -29,7 +29,11 @@ namespace PWC.Challenge.Application.Features.Auth.Commands.RegisterCustomer
                 request.FullName,
                 request.Address,
                 request.Email
-            );
+            )
+            {
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "UserRegistration" // Set CreatedBy
+            };
 
             customer.UserId = request.UserId; // Link to IdentityUser
 

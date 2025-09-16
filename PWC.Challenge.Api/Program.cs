@@ -27,6 +27,7 @@ internal class Program
         };
 
         builder.Services.AddSingleton(jsonSerializerOptions);
+        builder.Services.AddScoped<PWC.Challenge.Domain.Common.IUnitOfWork, PWC.Challenge.Infrastructure.Data.UnitOfWork>(); // Explicitly added IUnitOfWork registration
         builder.Services
             .AddInfrastructureServices(builder.Configuration, builder.Environment)
             .AddApplicationServices(builder.Configuration)

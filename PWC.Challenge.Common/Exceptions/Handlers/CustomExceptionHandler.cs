@@ -31,6 +31,11 @@ public class CustomExceptionHandler(
             translationKey = metadata.TranslationKey;
             statusCode = metadata.StatusCode;
         }
+        else if (exception is ArgumentException)
+        {
+            statusCode = StatusCodes.Status400BadRequest;
+            translationKey = "errors.argumentException";
+        }
 
         var problemDetails = new ProblemDetails
         {

@@ -29,7 +29,13 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<RegisterResponseDto>> Register([FromBody] RegisterRequestDto request)
     {
-        var user = new ApplicationUser { UserName = request.Email, Email = request.Email };
+        var user = new ApplicationUser 
+        {
+            UserName = request.Email, 
+            Email = request.Email,
+            FirstName = request.FullName, // Set FirstName
+            LastName = request.Address // Set LastName
+        };
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -39,7 +45,7 @@ public class AuthController : ControllerBase
 
         await _userManager.AddToRoleAsync(user, "Customer"); // Assign Customer role
 
-                var registerCustomerCommand = new RegisterCustomerCommand(
+        var registerCustomerCommand = new RegisterCustomerCommand(
             request.FullName,
             request.Dni,
             request.Address,

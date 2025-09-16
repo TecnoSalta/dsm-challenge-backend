@@ -75,10 +75,10 @@ public class AvailabilityService : IAvailabilityService
     {
         // Regla: Auto no disponible si tiene un rental que termina el día anterior
         var previousDay = startDate.AddDays(-1);
-        var rentalsEndingPreviousDay = await _rentalRepository.GetOverlappingRentalsAsync(
-            carId, previousDay, previousDay, excludedRentalId);
+        var rentalsEndingPreviousDay = await _rentalRepository.GetRentalsByEndDateAsync(
+            carId, previousDay, excludedRentalId);
 
-        return rentalsEndingPreviousDay.Any(r => r.RentalPeriod.EndDate == previousDay && r.Status != RentalStatus.Cancelled);
+        return rentalsEndingPreviousDay.Any();
     }
 
     private bool PassesFilters(Car car, string? carType, string? model)

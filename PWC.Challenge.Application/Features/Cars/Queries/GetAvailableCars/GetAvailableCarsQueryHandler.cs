@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PWC.Challenge.Application.Dtos;
+using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Common.CQRS;
 using PWC.Challenge.Domain.Entities;
@@ -14,12 +15,14 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
         ICarRepository carRepository,
         IAvailabilityService availabilityService,
         ICacheService cacheService,
+        IClock clock,
         ILogger<GetAvailableCarsQueryHandler> logger)
                 : IQueryHandler<GetAvailableCarsQuery, IReadOnlyList<AvailableCarDto>>
     {
         private readonly ICarRepository _carRepository = carRepository;
         private readonly IAvailabilityService _availabilityService = availabilityService;
         private readonly ICacheService _cacheService = cacheService;
+        private readonly IClock _clock = clock;
         private readonly ILogger<GetAvailableCarsQueryHandler> _logger = logger;
 
         public async Task<IReadOnlyList<AvailableCarDto>> Handle(
@@ -103,7 +106,7 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
             if (endDate.DayNumber - startDate.DayNumber < 1)
                 throw new ArgumentException("Rental period must be at least 1 day");
 
-            if (startDate < DateOnly.FromDateTime(DateTime.UtcNow))
+            if (startDate < DateOnly.FromDateTime(_clock.UtcNow))
                 throw new ArgumentException("Start date cannot be in the past");
         }
 

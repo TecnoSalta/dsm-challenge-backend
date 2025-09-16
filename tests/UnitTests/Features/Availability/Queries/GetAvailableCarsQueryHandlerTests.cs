@@ -2,6 +2,7 @@
 using Moq;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;
+using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Interfaces;
@@ -14,6 +15,7 @@ namespace UnitTests.Features.Availability.Queries
         private readonly Mock<ICarRepository> _carRepositoryMock;
         private readonly Mock<IAvailabilityService> _availabilityServiceMock;
         private readonly Mock<ICacheService> _cacheServiceMock;
+        private readonly Mock<IClock> _clockMock;
         private readonly Mock<ILogger<GetAvailableCarsQueryHandler>> _loggerMock;
         private readonly GetAvailableCarsQueryHandler _handler;
 
@@ -22,13 +24,18 @@ namespace UnitTests.Features.Availability.Queries
             _carRepositoryMock = new Mock<ICarRepository>();
             _availabilityServiceMock = new Mock<IAvailabilityService>();
             _cacheServiceMock = new Mock<ICacheService>();
+            _clockMock = new Mock<IClock>();
             _loggerMock = new Mock<ILogger<GetAvailableCarsQueryHandler>>();
 
             _handler = new GetAvailableCarsQueryHandler(
                 _carRepositoryMock.Object,
                 _availabilityServiceMock.Object,
                 _cacheServiceMock.Object,
+                _clockMock.Object,
                 _loggerMock.Object);
+
+            // Default clock setup
+            _clockMock.Setup(c => c.UtcNow).Returns(new DateTime(2025, 9, 15, 0, 0, 0, DateTimeKind.Utc));
         }
 
         [Fact]
@@ -231,13 +238,18 @@ namespace UnitTests.Features.Availability.Queries
         public async Task Handle_ShouldThrowException_WhenStartDateInPast()
         {
             // Arrange
-            var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-1)); // Past date
-            var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
+            var now = new DateTime(2025, 9, 20, 10, 0, 0, DateTimeKind.Utc);
+            _clockMock.Setup(c => c.UtcNow).Returns(now);
+
+            var startDate = new DateOnly(2025, 9, 19); // Past date
+            var endDate = new DateOnly(2025, 9, 22);
             var query = new GetAvailableCarsQuery(new AvailabilityQueryDto(startDate, endDate));
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
                 _handler.Handle(query, CancellationToken.None));
+
+            Assert.Equal("Start date cannot be in the past", ex.Message);
         }
 
         [Fact]
