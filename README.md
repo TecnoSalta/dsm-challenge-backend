@@ -38,10 +38,7 @@ reportgenerator -reports:./CVR/**/coverage.cobertura.xml -targetdir:./CoverHtmlV
 
         Contiene referencia a los proyectos: PWC.Challenge.Application
 
-    - PWC.Challenge.Worker (Proyecto de tipo ASP.NET Web API): Es utilizado para registrar consumidores de procesos gestionados por un message broker (RabbitMQ)
-
-        Contiene referencia a los proyectos: PWC.Challenge.Application y PWC.Challenge.Infrastructure
-
+ 
   
 
 ## Publish commands
