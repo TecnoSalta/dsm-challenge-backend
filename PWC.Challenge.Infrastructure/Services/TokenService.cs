@@ -16,7 +16,7 @@ public class TokenService : ITokenService
         _configuration = configuration;
     }
 
-    public (string accessToken, string refreshToken, DateTime expiration) GenerateTokens(Guid userId, string email, IList<string> roles)
+    public (string accessToken, string refreshToken, DateTime expiration) GenerateTokens(Guid userId, string email, IList<string> roles, Guid? customerId)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["Secret"];
@@ -33,6 +33,11 @@ public class TokenService : ITokenService
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        if (customerId.HasValue)
+        {
+            claims.Add(new Claim("customerId", customerId.Value.ToString()));
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));

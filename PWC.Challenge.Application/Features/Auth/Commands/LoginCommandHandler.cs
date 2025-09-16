@@ -9,31 +9,24 @@ namespace PWC.Challenge.Application.Features.Auth.Commands;
 
 public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ITokenService _tokenService;
 
-    public LoginCommandHandler(UserManager<ApplicationUser> userManager, ITokenService tokenService)
+    public LoginCommandHandler(ITokenService tokenService)
     {
-        _userManager = userManager;
         _tokenService = tokenService;
     }
 
     public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByEmailAsync(request.LoginRequest.Email);
-        if (user == null || !await _userManager.CheckPasswordAsync(user, request.LoginRequest.Password))
-        {
-            throw new BadRequestException("Invalid credentials.");
-        }
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var (accessToken, refreshToken, expiration) = _tokenService.GenerateTokens(user.Id, user.Email, roles);
+        var (accessToken, refreshToken, expiration) = _tokenService.GenerateTokens(request.UserId, request.Email, request.Roles, request.CustomerId);
 
         return new AuthResponseDto
         {
             Token = accessToken,
             RefreshToken = refreshToken,
-            Expiration = expiration
+            Expiration = expiration,
+            Role = request.Roles.FirstOrDefault(), // Assuming single role for simplicity
+            CustomerId = request.CustomerId
         };
     }
 }

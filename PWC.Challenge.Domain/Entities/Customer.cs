@@ -27,6 +27,16 @@ public class Customer : Entity
     public Guid UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
 
+    public void UpdateFullName(string fullName)
+    {
+        FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
+    }
+
+    public void UpdateAddress(string address)
+    {
+        Address = address ?? throw new ArgumentNullException(nameof(address));
+    }
+
     public void AddRental(Rental rental)
     {
         if (rental == null) throw new ArgumentNullException(nameof(rental));

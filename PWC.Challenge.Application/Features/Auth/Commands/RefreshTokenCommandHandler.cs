@@ -22,6 +22,12 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
     {
         var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
         var userId = Guid.Parse(principal.Identity.Name); // Assuming Name claim stores UserId
+        var customerIdClaim = principal.FindFirst("customerId");
+        Guid? customerId = null;
+        if (customerIdClaim != null)
+        {
+            customerId = Guid.Parse(customerIdClaim.Value);
+        }
 
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
@@ -30,7 +36,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var (newAccessToken, newRefreshToken, newExpiration) = _tokenService.GenerateTokens(user.Id, user.Email, roles);
+        var (newAccessToken, newRefreshToken, newExpiration) = _tokenService.GenerateTokens(user.Id, user.Email, roles, customerId);
 
         user.RefreshToken = newRefreshToken;
         await _userManager.UpdateAsync(user);

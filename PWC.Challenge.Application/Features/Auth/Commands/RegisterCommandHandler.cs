@@ -7,18 +7,16 @@ using PWC.Challenge.Common.Exceptions;
 
 namespace PWC.Challenge.Application.Features.Auth.Commands;
 
-public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthResponseDto>
+public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApplicationUser>
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ITokenService _tokenService;
 
-    public RegisterCommandHandler(UserManager<ApplicationUser> userManager, ITokenService tokenService)
+    public RegisterCommandHandler(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
-        _tokenService = tokenService;
     }
 
-    public async Task<AuthResponseDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    public async Task<ApplicationUser> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         var existingUser = await _userManager.FindByEmailAsync(request.RegisterRequest.Email);
         if (existingUser != null)
@@ -30,8 +28,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
         {
             Email = request.RegisterRequest.Email,
             UserName = request.RegisterRequest.Email,
-            FirstName = request.RegisterRequest.FirstName,
-            LastName = request.RegisterRequest.LastName
+            FirstName = request.RegisterRequest.FullName, // Use FullName
+            LastName = request.RegisterRequest.Address // Use Address for LastName (temporary, or add a new field)
         };
 
         var result = await _userManager.CreateAsync(user, request.RegisterRequest.Password);
@@ -43,14 +41,6 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
         // Assign default role, e.g., "Customer"
         await _userManager.AddToRoleAsync(user, "Customer");
 
-        var roles = await _userManager.GetRolesAsync(user);
-        var (accessToken, refreshToken, expiration) = _tokenService.GenerateTokens(user.Id, user.Email, roles);
-
-        return new AuthResponseDto
-        {
-            Token = accessToken,
-            RefreshToken = refreshToken,
-            Expiration = expiration
-        };
+        return user;
     }
 }

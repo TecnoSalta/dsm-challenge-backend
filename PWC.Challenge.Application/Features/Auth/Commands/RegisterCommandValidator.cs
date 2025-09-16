@@ -14,10 +14,11 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .NotEmpty().WithMessage("Password is required.")
             .MinimumLength(6).WithMessage("Password must be at least 6 characters long.");
 
-        RuleFor(x => x.RegisterRequest.FirstName)
-            .NotEmpty().WithMessage("First name is required.");
+        RuleFor(x => x.RegisterRequest.FullName)
+            .NotEmpty().WithMessage("Full name is required.");
 
-        RuleFor(x => x.RegisterRequest.LastName)
-            .NotEmpty().WithMessage("Last name is required.");
+        RuleFor(x => x.RegisterRequest.Address)
+            .NotEmpty().WithMessage("Address is required.");
     }
 }
+
