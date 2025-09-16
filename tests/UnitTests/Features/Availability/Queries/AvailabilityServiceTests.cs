@@ -132,9 +132,8 @@ namespace PWC.Challenge.UnitTests.Domain.Services
                 repo.HasOverlappingRentalsAsync(carId, startDate, endDate, null))
                 .ReturnsAsync(false);
 
-            // Usar null explícito y fechas específicas
             _rentalRepositoryMock.Setup(repo =>
-                repo.GetOverlappingRentalsAsync(carId, previousDay, previousDay, null))
+                repo.GetRentalsByEndDateAsync(carId, previousDay, null))
                 .ReturnsAsync(() =>
                 {
                     var customer = new Customer(Guid.NewGuid(), "123456789", "Test", "Test", "test@test.com");
@@ -176,9 +175,8 @@ namespace PWC.Challenge.UnitTests.Domain.Services
                 repo.HasOverlappingRentalsAsync(carId, startDate, endDate, null))
                 .ReturnsAsync(false);
 
-            // Usar null explícito
             _rentalRepositoryMock.Setup(repo =>
-                repo.GetOverlappingRentalsAsync(carId, previousDay, previousDay, null))
+                repo.GetRentalsByEndDateAsync(carId, previousDay, null))
                 .ReturnsAsync(new List<Rental>());
 
             // Act
@@ -209,9 +207,8 @@ namespace PWC.Challenge.UnitTests.Domain.Services
                 repo.HasOverlappingRentalsAsync(carId, startDate, endDate, excludedRentalId))
                 .ReturnsAsync(false);
 
-            // Usar excludedRentalId explícito
             _rentalRepositoryMock.Setup(repo =>
-                repo.GetOverlappingRentalsAsync(carId, previousDay, previousDay, excludedRentalId))
+                repo.GetRentalsByEndDateAsync(carId, previousDay, excludedRentalId))
                 .ReturnsAsync(new List<Rental>());
 
             // Act
