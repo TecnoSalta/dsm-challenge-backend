@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Common.Exceptions;
+using PWC.Challenge.Application.Features.Rentals.Queries.GetRentalById;
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -42,7 +43,12 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} registrada exitosamente", response.Id);
-            return CreatedAtAction("created", new { id = response.Id }, response); // Assuming a GetRentalById exists or will exist
+            // Aquí está el fix: se usa nameof(GetRentalById) en lugar del string "created"
+            return CreatedAtAction(
+                nameof(GetRentalById),
+                new { id = response.Id },
+                response
+            );
         }
         catch (ValidationException ex)
         {
@@ -177,7 +183,7 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} completada exitosamente", id);
-            return Ok(response);
+            return Created(string.Empty, response);
         }
         catch (ValidationException ex)
         {
@@ -192,6 +198,39 @@ public class RentalsController(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al completar reserva con ID: {RentalId}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// CU-XX – Obtener detalles de una reserva por ID
+    /// </summary>
+    [Authorize(Roles = "Admin,Customer")]
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(RentalDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetRentalById(
+        [FromRoute] Guid id,
+        CancellationToken ct)
+    {
+        _logger.LogInformation("Iniciando consulta de reserva con ID: {RentalId}", id);
+
+        try
+        {
+            var query = new GetRentalByIdQuery(id);
+            var response = await _sender.Send(query, ct);
+
+            _logger.LogInformation("Reserva con ID: {RentalId} consultada exitosamente", id);
+            return Ok(response);
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Reserva no encontrada con ID: {RentalId}", id);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al consultar reserva con ID: {RentalId}", id);
             return StatusCode(500, "Error interno del servidor");
         }
     }

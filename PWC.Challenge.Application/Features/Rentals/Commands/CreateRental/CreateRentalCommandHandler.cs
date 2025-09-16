@@ -36,7 +36,7 @@ public class CreateRentalCommandHandler : IRequestHandler<CreateRentalCommand, C
         // Input validation (dates) is handled by CreateRentalCommandValidator
 
         // 1. Check if Customer exists
-        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, asNoTracking: true, cancellationToken);
+        var customer = await _customerRepository.GetByIdAsync(request.CustomerId, false,cancellationToken);
         if (customer == null)
         {
             throw new NotFoundException($"Customer with ID {request.CustomerId} not found.");

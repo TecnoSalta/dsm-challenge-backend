@@ -1,5 +1,4 @@
 using MediatR;
-using System;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;
 

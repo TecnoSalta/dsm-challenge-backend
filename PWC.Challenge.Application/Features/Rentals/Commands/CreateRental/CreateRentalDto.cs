@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;

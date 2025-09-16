@@ -18,6 +18,7 @@ using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Infrastructure.Services;
 using StackExchange.Redis;
 using System.Reflection;
+using PWC.Challenge.Infrastructure.Data.Interceptors;
 
 namespace PWC.Challenge.Infrastructure;
 
@@ -95,9 +96,13 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString(nameof(ApplicationDbContext));
 
+        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
+
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
+            options.AddInterceptors(sp.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+            options.EnableSensitiveDataLogging(); // Added for debugging
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
                 npgsqlOptions.UseNetTopologySuite();
@@ -153,6 +158,9 @@ public static class DependencyInjection
 
         // Register Clock Service
         services.AddSingleton<IClock, SystemClock>();
+
+        // Register Current User Service
+        services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
         return services;
     }
