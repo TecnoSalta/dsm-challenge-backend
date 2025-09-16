@@ -1,50 +1,105 @@
-# WT.Ticketing
+# PWC.Challenge
 
-  
-Testing Coverage:
+## ✅ Testing & Coverage
+
+Ejecutar los tests con cobertura de código:
+
+```bash
 dotnet test PWC.Challenge.sln --collect:"XPlat Code Coverage" --results-directory ./CVR --logger "console;verbosity=detailed"
+```
 
+Generar reporte HTML de cobertura:
+
+```bash
 reportgenerator -reports:./CVR/**/coverage.cobertura.xml -targetdir:./CoverHtmlV2 -reporttypes:Html
-## EF Core Commands
+```
 
-  
+El reporte quedará en **`./CoverHtmlV2/index.html`** y se puede abrir en cualquier navegador.  
 
-    1. Create migration command: Add-Migration Initial -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext -OutputDir Data/Migrations
+---
 
-    2. Update database command:  Update-Database -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext
+## 🗄️ EF Core Commands
 
+- **Crear migración inicial**  
+  ```powershell
+  Add-Migration Initial -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext -OutputDir Data/Migrations
+  ```
 
-	Remove-Migration -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext
+- **Actualizar base de datos**  
+  ```powershell
+  Update-Database -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext
+  ```
 
-## Project structure (Clean Architecture + DDD)
+- **Eliminar última migración**  
+  ```powershell
+  Remove-Migration -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext
+  ```
 
-  
+---
 
-    PWC.Challenge (Solución Visual Studio)
+## 🏗️ Project structure (Clean Architecture + DDD)
 
-    - WT.Common (Proyecto de tipo Class Library)
+**PWC.Challenge (Solution)**  
 
-    - PWC.Challenge.Api (Proyecto de tipo ASP.NET Web API)
+- **PWC.Challenge.Common**  
+  _Clase utilitaria y lógica común compartida._  
 
-        Contiene referencia a los proyectos: PWC.Challenge.Application y PWC.Challenge.Infrastructure
+- **PWC.Challenge.Api**  
+  _Proyecto `ASP.NET Web API`._  
+  Contiene controladores, middlewares, configuración y referencia a:
+  - `PWC.Challenge.Application`
+  - `PWC.Challenge.Infrastructure`
 
-    - PWC.Challenge.Domain (Proyecto de tipo Class Library)
+- **PWC.Challenge.Domain**  
+  _Core del dominio (DDD)._  
+  - Entidades  
+  - Value Objects  
+  - Aggregates  
+  - Eventos de dominio  
 
-    - PWC.Challenge.Application (Proyecto de tipo Class Library)
+- **PWC.Challenge.Application**  
+  _Capa de aplicación (CQRS/MediatR)._  
+  - DTOs  
+  - Commands / Queries  
+  - Handlers  
+  - Casos de uso  
+  - Reglas de aplicación  
 
-        Contiene referencia a los proyectos: PWC.Challenge.Common y PWC.Challenge.Domain
+  Contiene referencia a:
+  - `PWC.Challenge.Common`
+  - `PWC.Challenge.Domain`
 
-    - PWC.Challenge.Infrastructure (Proyecto de tipo Class Library)
+- **PWC.Challenge.Infrastructure**  
+  _Persistencia, EF Core, repositorios, servicios externos._  
+  Contiene referencia a:
+  - `PWC.Challenge.Application`
 
-        Contiene referencia a los proyectos: PWC.Challenge.Application
+---
 
- 
-  
+## 🚀 Publish Commands
 
-## Publish commands
+Publicar con configuración QA (Windows x64):  
 
-  
+```bash
+dotnet publish -c Release -r win-x64 -o ./bin/Release/net8.0/publish-qa /p:EnvironmentName=QA
+```
 
-    - Windows compatibiity command with QA environment
+Otros entornos pueden configurarse cambiando `/p:EnvironmentName=QA`.  
 
-        dotnet publish -c Release -r win-x64 -o ./bin/Release/net8.0/publish-qa /p:EnvironmentName=QA
+---
+
+## 🔒 Authentication & Authorization
+
+- Autenticación vía **JWT Bearer**.  
+- Autorización por **roles (Admin, Customer)** en los controladores con `[Authorize(Roles = "...")]`.  
+
+---
+
+## 📌 Endpoints principales
+
+- **POST `/api/rentals`** → Crear reserva (`201 Created`)  
+- **GET `/api/rentals/{id}`** → Obtener reserva por Id  
+- **GET `/api/rentals`** → Listar reservas existentes  
+- **PUT `/api/rentals/{id}`** → Actualizar reserva  
+- **DELETE `/api/rentals/{id}`** → Cancelar reserva  
+- **POST `/api/rentals/{id}/complete`** → Completar una reserva  
