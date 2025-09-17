@@ -24,7 +24,7 @@ public class RentalSeed : ISeedData
                 CreatedAt = createdAt,
                 CreatedBy = createdBy,
                 IsDeleted = false,
-                Status = RentalStatus.Active,
+                Status = RentalStatus.Completed,
                 DailyRate = 100m,
                 TotalCost = 1260m
             });
