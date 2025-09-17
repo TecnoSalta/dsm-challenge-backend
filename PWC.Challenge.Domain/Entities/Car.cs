@@ -136,6 +136,29 @@ public class Car : AggregateRoot
         AddDomainEvent(new CarRentalAddedDomainEvent(Id, rental.Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate));
     }
 
+    public void AssignToActiveRental(Rental rental)
+    {
+        if (rental == null)
+            throw new ArgumentNullException(nameof(rental));
+
+        // Ensure the car is available for the rental period, considering the buffer
+        if (!IsAvailableForPeriod(rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate))
+        {
+            throw new OverlappingRentalException(Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate);
+        }
+
+        // If the car is already Rented, it means it's already part of an active rental.
+        // This method is for assigning to an *active* rental, so if it's already Rented, it's fine.
+        // If it's Available or Reserved, it transitions to Rented.
+        if (Status != CarStatus.Rented)
+        {
+            Status = CarStatus.Rented;
+        }
+
+        _rentals.Add(rental); // Add the rental to the car's collection
+        AddDomainEvent(new CarAssignedToActiveRentalDomainEvent(Id, rental.Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate));
+    }
+
     // ========== MÉTODOS PRIVADOS ==========
 
     private bool HasOverlappingRentals(DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)

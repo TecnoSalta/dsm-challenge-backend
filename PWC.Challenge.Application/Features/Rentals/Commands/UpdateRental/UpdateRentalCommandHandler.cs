@@ -93,7 +93,7 @@ public class UpdateRentalCommandHandler
             originalCar.ForceAvailable("Car swapped from rental update.");
             await _carRepo.UpdateAsync(originalCar, false, cancellationToken);
 
-            newCar.ConfirmPickup(cmd.RentalId);
+            newCar.AssignToActiveRental(rental); // Use the new method
             await _carRepo.UpdateAsync(newCar, false, cancellationToken);
         }
 

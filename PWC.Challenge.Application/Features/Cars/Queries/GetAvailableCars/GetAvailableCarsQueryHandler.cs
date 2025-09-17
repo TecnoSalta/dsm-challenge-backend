@@ -58,6 +58,12 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
             // Obtener coches disponibles directamente del repositorio
             var availableCars = await _carRepository.GetAvailableCarsAsync(startDate, endDate, carType, model, ct);
 
+            // Ensure availableCars is not null before proceeding
+            if (availableCars == null)
+            {
+                availableCars = new List<Car>(); // Initialize as an empty list
+            }
+
             var result = availableCars
                 .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate, c.LicensePlate, c.Status.ToString()))
                 .ToList();

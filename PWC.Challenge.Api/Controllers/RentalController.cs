@@ -45,15 +45,17 @@ public class RentalsController(
 
         try
         {
-            var rental = await _rentalService.RegisterRentalAsync(request);
+            var command = new CreateRentalCommand(request);
+
+            var rental = await _sender.Send(command, ct);
 
             _logger.LogInformation("Alquiler con ID: {RentalId} registrado exitosamente", rental.Id);
+
             return CreatedAtAction(
                 nameof(GetRentalById),
                 new { id = rental.Id },
                 rental
             );
-
         }
         catch (ValidationException ex)
         {

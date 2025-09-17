@@ -12,3 +12,4 @@ public class CarSentToMaintenanceDomainEvent(Guid CarId, CarStatus PreviousStatu
 public class CarMaintenanceCompletedDomainEvent(Guid CarId, DateTime MaintenanceCompletedDate) : DomainEvent;
 public class CarStatusForcedDomainEvent(Guid CarId, CarStatus PreviousStatus, CarStatus NewStatus, string Reason, DateTime ForcedDate) : DomainEvent;
 public class CarRentalAddedDomainEvent(Guid CarId, Guid RentalId, DateOnly StartDate, DateOnly EndDate) : DomainEvent;
+public class CarAssignedToActiveRentalDomainEvent(Guid CarId, Guid RentalId, DateOnly StartDate, DateOnly EndDate) : DomainEvent;
