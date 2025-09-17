@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{3FE4304A-3
 	ProjectSection(SolutionItems) = preProject
 		architecture.md = architecture.md
 		DER.md = DER.md
+		RentalPos.txt = RentalPos.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Email.Processor", "Email.Processor\Email.Processor.csproj", "{96F73017-029A-491B-8E03-AB7C517FDB5D}"

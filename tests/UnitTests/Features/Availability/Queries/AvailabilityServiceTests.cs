@@ -52,7 +52,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
             var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
-            car.MarkAsInMaintenance();
+            car.SendToMaintenance("Test maintenance");
 
             _carRepositoryMock
                 .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))

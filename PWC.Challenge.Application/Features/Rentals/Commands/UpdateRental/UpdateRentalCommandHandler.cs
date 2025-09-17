@@ -90,10 +90,10 @@ public class UpdateRentalCommandHandler
         // Si el coche cambió, actualizamos el estado del coche anterior y el nuevo
         if (newCar != null)
         {
-            originalCar.MarkAsAvailable();
+            originalCar.ForceAvailable("Car swapped from rental update.");
             await _carRepo.UpdateAsync(originalCar, false, cancellationToken);
 
-            newCar.MarkAsRented();
+            newCar.ConfirmPickup(cmd.RentalId);
             await _carRepo.UpdateAsync(newCar, false, cancellationToken);
         }
 

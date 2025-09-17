@@ -2,8 +2,10 @@
 
 public enum CarStatus
 {
+    Reserved,
     Rented,
     Available,
     Inactive,
-    InMaintenance
+    InMaintenance,
+    PendingCleaning
 }

@@ -28,7 +28,7 @@ namespace PWC.Challenge.Application.Features.Cars.EventHandlers
             if (car is null) return;
 
             // Marcamos el coche como disponible
-            car.MarkAsAvailable();
+            car.CancelReservation(notification.RentalId);
 
             await _carRepository.UpdateAsync(car, saveChanges: true, cancellationToken);
         }

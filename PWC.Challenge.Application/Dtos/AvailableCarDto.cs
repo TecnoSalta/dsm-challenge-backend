@@ -5,5 +5,6 @@ public record AvailableCarDto(
     string Type,
     string Model,
     decimal DailyRate,
-    string LicensePlate // Added this line
+    string LicensePlate,
+    string Status
 );

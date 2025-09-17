@@ -23,40 +23,32 @@ public class CarRepository : BaseRepository<Car>, ICarRepository
     }
 
     public async Task<List<Car>> GetAvailableCarsAsync(
-        DateOnly startDate,
-        DateOnly endDate,
-        string? carType = null,
-        string? model = null,
+        DateOnly startDate, 
+        DateOnly endDate, 
+        string? carType = null, 
+        string? carModel = null,
         CancellationToken cancellationToken = default)
     {
-        var query = Context.Set<Car>()
-            .Include(c => c.Rentals)
-            .Include(c => c.Services)
-            .Where(c => c.Status == CarStatus.Available)
-            .AsNoTracking();
+        var availableCars = await Context.Set<Car>()
+            .Where(car => car.Status == CarStatus.Available)
+            
+            // Filtros opcionales por tipo y modelo
+            .Where(car => carType == null || car.Type == carType)
+            .Where(car => carModel == null || car.Model == carModel)
+            
+            // Excluir autos que tienen servicios programados en el período
+            .Where(car => !car.Services.Any(service => 
+                service.Date <= endDate && 
+                service.Date.AddDays(service.DurationDays) >= startDate))
+            
+            // Excluir autos que tienen alquileres activos/reservados que se solapan
+            .Where(car => !car.Rentals.Any(rental => 
+                (rental.Status == RentalStatus.Active || rental.Status == RentalStatus.Reserved) &&
+                rental.RentalPeriod.StartDate <= endDate && 
+                rental.RentalPeriod.EndDate >= startDate))
+            .ToListAsync(cancellationToken);
 
-        if (!string.IsNullOrEmpty(carType))
-        {
-            query = query.Where(c => c.Type == carType);
-        }
-
-        if (!string.IsNullOrEmpty(model))
-        {
-            query = query.Where(c => c.Model == model);
-        }
-
-        var cars = await query.ToListAsync(cancellationToken);
-
-        // Filter in memory based on overlapping rentals and services
-        return cars.Where(car =>
-            !car.Rentals.Any(r =>
-                r.Status == RentalStatus.Active &&
-                r.RentalPeriod.StartDate < endDate &&
-                r.RentalPeriod.EndDate > startDate)
-            &&
-            !car.Services.Any(s =>
-                s.OverlapsWith(startDate, endDate)) // Assuming Service.OverlapsWith method exists
-        ).ToList();
+        return availableCars;
     }
 
     public async Task<bool> IsCarAvailableAsync(

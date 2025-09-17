@@ -59,7 +59,7 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
             var availableCars = await _carRepository.GetAvailableCarsAsync(startDate, endDate, carType, model, ct);
 
             var result = availableCars
-                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate, c.LicensePlate))
+                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate, c.LicensePlate, c.Status.ToString()))
                 .ToList();
 
             try

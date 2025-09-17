@@ -53,7 +53,7 @@ namespace UnitTests.Features.Availability.Queries
             };
 
             var expectedResult = cars
-                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate,c.LicensePlate))
+                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate,c.LicensePlate, c.Status.ToString()))
                 .ToList();
 
             _cacheServiceMock
@@ -96,8 +96,8 @@ namespace UnitTests.Features.Availability.Queries
 
             var cachedCars = new List<AvailableCarDto>
             {
-                new AvailableCarDto(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
-                new AvailableCarDto(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2")
+                new AvailableCarDto(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1", "Available"),
+                new AvailableCarDto(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2", "Available")
             };
 
             _cacheServiceMock
@@ -351,7 +351,7 @@ namespace UnitTests.Features.Availability.Queries
 
             var availableCar = new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1");
             var maintenanceCar = new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m,"TESTPLATE2");
-            maintenanceCar.MarkAsInMaintenance(); // Mark as unavailable
+            maintenanceCar.SendToMaintenance("Test maintenance"); // Mark as unavailable
 
             var cars = new List<Car> { availableCar, maintenanceCar };
 
