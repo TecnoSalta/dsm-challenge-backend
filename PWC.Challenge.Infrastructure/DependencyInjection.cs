@@ -14,11 +14,11 @@ using PWC.Challenge.Domain.Services;
 using PWC.Challenge.Infrastructure.Configurations;
 using PWC.Challenge.Infrastructure.Data;
 using PWC.Challenge.Infrastructure.Data.Common;
-using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Infrastructure.Services;
 using StackExchange.Redis;
 using System.Reflection;
 using PWC.Challenge.Infrastructure.Data.Interceptors;
+using PWC.Challenge.Infrastructure.Data.Repositories;
 
 namespace PWC.Challenge.Infrastructure;
 
@@ -34,9 +34,9 @@ public static class DependencyInjection
         // Agregar Redis Cache
         services.AddRedisCache(configuration);
 
-        services.AddAuth();
+        services.AddAuth(configuration); // Pasar configuración
 
-        services.AddDbContexts(configuration);
+        services.AddDbContexts(configuration, environment); // Pasar environment
 
         services.AddRepositories(domainAssembly, infrastructureAssembly);
 
@@ -71,7 +71,7 @@ public static class DependencyInjection
                 return ConnectionMultiplexer.Connect(config);
             });
 
-            services.AddSingleton<ICacheService, RedisCacheService>();
+            services.AddSingleton<ICacheService, RedisCacheService>(); // Cambiado a RedisCacheService
         }
         else
         {
@@ -83,29 +83,47 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddAuth(this IServiceCollection services)
+    private static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IAuthService, AuthService>();
-        services.AddScoped<ITokenService, TokenService>(); // Added
+        services.AddScoped<ITokenService, TokenService>();
+
+        // Agregar autenticación JWT si es necesario
+        // services.AddJwtAuthentication(configuration);
 
         return services;
     }
 
-    private static IServiceCollection AddDbContexts(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddDbContexts(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         var connectionString = configuration.GetConnectionString(nameof(ApplicationDbContext));
 
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException($"Connection string '{nameof(ApplicationDbContext)}' not found.");
+        }
+
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
+        services.AddScoped<ISaveChangesInterceptor, AuditableEntitySaveChangesInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            options.AddInterceptors(sp.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.EnableSensitiveDataLogging(); // Added for debugging
+
+            // Solo habilitar en desarrollo
+            options.EnableSensitiveDataLogging(environment.IsDevelopment());
+            options.EnableDetailedErrors(environment.IsDevelopment());
+
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
                 npgsqlOptions.UseNetTopologySuite();
+                npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                // Configuraciones adicionales para mejor rendimiento
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorCodesToAdd: null);
             });
         });
 
@@ -114,18 +132,38 @@ public static class DependencyInjection
 
     private static IServiceCollection AddRepositories(this IServiceCollection services, Assembly domainAssembly, Assembly infrastructureAssembly)
     {
+        // Registrar repositorio base primero
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
+        // Registrar repositorios específicos explícitamente
+        services.AddScoped<ICarRepository, CarRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IRentalRepository, RentalRepository>();
+
+        // Registro automático para otros repositorios
         var repositoryInterfaces = domainAssembly.GetExportedTypes()
-            .Where(t => t.IsInterface && !t.IsGenericTypeDefinition &&
-                        (t.GetInterfaces().Any(i => i.IsGenericType &&
-                            (i.GetGenericTypeDefinition() == typeof(IBaseRepository<>))))).ToList();
+            .Where(t => t.IsInterface &&
+                       !t.IsGenericTypeDefinition &&
+                       t.Name.EndsWith("Repository") &&
+                       t != typeof(IBaseRepository<>))
+            .ToList();
 
         var repositoryImplementations = infrastructureAssembly.GetExportedTypes()
-            .Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition && t.IsClass).ToList();
+            .Where(t => t.IsClass &&
+                       !t.IsAbstract &&
+                       t.Name.EndsWith("Repository"))
+            .ToList();
 
         foreach (var repositoryInterface in repositoryInterfaces)
         {
+            // Saltar interfaces ya registradas explícitamente
+            if (repositoryInterface == typeof(ICarRepository) ||
+                repositoryInterface == typeof(ICustomerRepository) ||
+                repositoryInterface == typeof(IRentalRepository))
+            {
+                continue;
+            }
+
             var repositoryImplementation = repositoryImplementations
                 .FirstOrDefault(impl => repositoryInterface.IsAssignableFrom(impl));
 
@@ -140,7 +178,7 @@ public static class DependencyInjection
 
     private static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
-        // Registrar servicios de dominio que necesiten cache
+        // Registrar servicios con caching
         services.AddScoped<IAvailabilityService>(sp =>
         {
             var originalService = new AvailabilityService(
@@ -153,16 +191,13 @@ public static class DependencyInjection
             return new CachedAvailabilityService(originalService, cacheService, logger);
         });
 
-        // Register RentalAvailabilityService
+        // Registrar otros servicios
         services.AddScoped<IRentalAvailabilityService, RentalAvailabilityService>();
-
-        // Register Clock Service
-        services.AddSingleton<IClock, SystemClock>();
-
-        // Register Current User Service
-        services.AddSingleton<ICurrentUserService, CurrentUserService>();
-
         services.AddScoped<IStatisticService, StatisticService>();
+
+        // Registrar servicios singleton
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
         return services;
     }

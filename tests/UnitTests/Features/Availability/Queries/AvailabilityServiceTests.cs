@@ -51,7 +51,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
             car.MarkAsInMaintenance();
 
             _carRepositoryMock
@@ -72,7 +72,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, CarStatus.Available);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE", CarStatus.Available);
             car.AddService(startDate, 2); // Add a service that overlaps
 
             _carRepositoryMock
@@ -94,7 +94,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
 
             _carRepositoryMock
             .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -121,7 +121,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
             var previousDay = startDate.AddDays(-1);
             _carRepositoryMock
             .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -137,7 +137,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
                 .ReturnsAsync(() =>
                 {
                     var customer = new Customer(Guid.NewGuid(), "123456789", "Test", "Test", "test@test.com");
-                    var rentalCar = new Car(carId, "Sedan", "Toyota Camry", 50m);
+                    var rentalCar = new Car(carId, "Sedan", "Toyota Camry", 50m, "RENTALPLATE");
                     var rental = Rental.CreateForTest(
                         Guid.NewGuid(),
                         customer,
@@ -164,7 +164,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
             var previousDay = startDate.AddDays(-1);
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
 
             _carRepositoryMock
              .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -196,7 +196,7 @@ namespace PWC.Challenge.UnitTests.Domain.Services
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
             var previousDay = startDate.AddDays(-1);
 
-            var car = new Car(carId, "Sedan", "Toyota Camry", 50m);
+            var car = new Car(carId, "Sedan", "Toyota Camry", 50m, "TESTPLATE");
 
             _carRepositoryMock
                 .Setup(repo => repo.GetByIdAsync(carId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))

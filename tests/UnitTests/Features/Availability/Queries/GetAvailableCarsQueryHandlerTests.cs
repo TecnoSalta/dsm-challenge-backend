@@ -48,12 +48,12 @@ namespace UnitTests.Features.Availability.Queries
 
             var cars = new List<Car>
             {
-                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m),
-                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m)
+                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
+                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2")
             };
 
             var expectedResult = cars
-                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate))
+                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate,c.LicensePlate))
                 .ToList();
 
             _cacheServiceMock
@@ -96,8 +96,8 @@ namespace UnitTests.Features.Availability.Queries
 
             var cachedCars = new List<AvailableCarDto>
             {
-                new AvailableCarDto(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m),
-                new AvailableCarDto(Guid.NewGuid(), "SUV", "Honda CR-V", 70m)
+                new AvailableCarDto(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
+                new AvailableCarDto(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2")
             };
 
             _cacheServiceMock
@@ -136,9 +136,9 @@ namespace UnitTests.Features.Availability.Queries
 
             var cars = new List<Car>
             {
-                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m),
-                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m),
-                new Car(Guid.NewGuid(), "SUV", "Ford Explorer", 80m)
+                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
+                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2"),
+                new Car(Guid.NewGuid(), "SUV", "Ford Explorer", 80m,"TESTPLATE3")
             };
 
             _cacheServiceMock
@@ -172,9 +172,9 @@ namespace UnitTests.Features.Availability.Queries
 
             var cars = new List<Car>
             {
-                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m),
-                new Car(Guid.NewGuid(), "Sedan", "Honda Accord", 55m),
-                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m)
+                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
+                new Car(Guid.NewGuid(), "Sedan", "Honda Accord", 55m, "TESTPLATE2"),
+                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE3")
             };
 
             _cacheServiceMock
@@ -208,8 +208,8 @@ namespace UnitTests.Features.Availability.Queries
 
             var cars = new List<Car>
             {
-                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m),
-                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m)
+                new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1"),
+                new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m, "TESTPLATE2")
             };
 
             _cacheServiceMock
@@ -274,7 +274,7 @@ namespace UnitTests.Features.Availability.Queries
 
             _carRepositoryMock
                 .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Car> { new Car(Guid.NewGuid(), "SUV", "CR-V", 70m) });
+                .ReturnsAsync(new List<Car> { new Car(Guid.NewGuid(), "SUV", "CR-V", 70m,"TESTPLATE1") });
 
             _availabilityServiceMock.Setup(service =>
                 service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
@@ -307,7 +307,7 @@ namespace UnitTests.Features.Availability.Queries
 
             var cars = new List<Car>
     {
-        new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m)
+        new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1")
     };
 
             // Simular excepción en el cache para la operación GET
@@ -349,8 +349,8 @@ namespace UnitTests.Features.Availability.Queries
             var endDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3));
             var query = new GetAvailableCarsQuery(new AvailabilityQueryDto(startDate, endDate));
 
-            var availableCar = new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m);
-            var maintenanceCar = new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m);
+            var availableCar = new Car(Guid.NewGuid(), "Sedan", "Toyota Camry", 50m, "TESTPLATE1");
+            var maintenanceCar = new Car(Guid.NewGuid(), "SUV", "Honda CR-V", 70m,"TESTPLATE2");
             maintenanceCar.MarkAsInMaintenance(); // Mark as unavailable
 
             var cars = new List<Car> { availableCar, maintenanceCar };

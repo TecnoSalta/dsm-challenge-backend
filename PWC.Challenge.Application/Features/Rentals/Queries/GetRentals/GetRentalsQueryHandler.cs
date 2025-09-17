@@ -1,10 +1,7 @@
 using MediatR;
+using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Domain.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace PWC.Challenge.Application.Features.Rentals.Queries.GetRentals;
 
@@ -19,7 +16,8 @@ public class GetRentalsQueryHandler : IRequestHandler<GetRentalsQuery, IReadOnly
 
     public async Task<IReadOnlyList<RentalDto>> Handle(GetRentalsQuery request, CancellationToken cancellationToken)
     {
-        var rentals = await _rentalRepository.GetAllAsync(cancellationToken);
+        // Use the new method to get rentals with eager-loaded customers
+        var rentals = await _rentalRepository.GetAllWithCustomersAsync(asNoTracking: true, cancellationToken: cancellationToken);
 
         return rentals.Select(rental => new RentalDto
         {
@@ -31,7 +29,14 @@ public class GetRentalsQueryHandler : IRequestHandler<GetRentalsQuery, IReadOnly
             Status = rental.Status,
             DailyRate = rental.DailyRate,
             TotalCost = rental.TotalCost,
-            ActualReturnDate = rental.ActualReturnDate
+            ActualReturnDate = rental.ActualReturnDate,
+            Customer = rental.Customer != null ? new CustomerDto
+            {
+                Id = rental.Customer.Id,
+                Dni = rental.Customer.Dni,
+                FullName = rental.Customer.FullName,
+                Address = rental.Customer.Address
+            } : null
         }).ToList();
     }
 }

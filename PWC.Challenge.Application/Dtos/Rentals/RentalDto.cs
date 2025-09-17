@@ -6,6 +6,7 @@ public class RentalDto
 {
     public Guid Id { get; set; }
     public Guid CustomerId { get; set; }
+    public CustomerDto? Customer { get; set; } // Added this line
     public Guid CarId { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }

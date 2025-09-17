@@ -11,6 +11,7 @@ public class Car : AggregateRoot
     public string Model { get; private set; } = default!;
     public decimal DailyRate { get; private set; }
     public CarStatus Status { get; private set; } = CarStatus.Available;
+    public string LicensePlate { get; private set; } = default!; // Added this line
     public IReadOnlyList<Service> Services => _services.AsReadOnly();
     public IReadOnlyList<Rental> Rentals => _rentals.AsReadOnly();
 
@@ -21,12 +22,13 @@ public class Car : AggregateRoot
     protected Car() { }
 
     // Constructor de dominio
-    public Car(Guid id, string type, string model, decimal dailyRate, CarStatus status = CarStatus.Available)
+    public Car(Guid id, string type, string model, decimal dailyRate, string licencePlate, CarStatus status = CarStatus.Available) // Added licencePlate
     {
         Id = id;
         Type = string.IsNullOrWhiteSpace(type) ? throw new InvalidCarArgumentException(nameof(type)) : type;
         Model = string.IsNullOrWhiteSpace(model) ? throw new InvalidCarArgumentException(nameof(model)) : model;
         DailyRate = dailyRate;
+        LicensePlate = licencePlate ?? throw new InvalidCarArgumentException(nameof(licencePlate)); // Added this line
         Status = status;
     }
 

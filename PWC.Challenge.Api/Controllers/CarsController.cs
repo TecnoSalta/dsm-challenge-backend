@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using PWC.Challenge.Application.Features.Cars.Queries.GetCarMetadata;
 using PWC.Challenge.Application.Features.Cars.Queries.GetNextCarServices;
 using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Application.Features.Cars.Queries.GetCars;
+using PWC.Challenge.Application.Dtos;
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -31,5 +33,17 @@ public class CarsController : ControllerBase
     {
         var results = await _mediator.Send(new GetNextCarServicesQuery());
         return Ok(results);
+    }
+
+    /// <summary>
+    /// Obtener todas los coches con sus servicios
+    /// </summary>
+    [HttpGet] // This will map to /api/Cars
+    [ProducesResponseType(typeof(IReadOnlyList<CarDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCars()
+    {
+        var query = new GetCarsQuery();
+        var response = await _mediator.Send(query);
+        return Ok(response);
     }
 }

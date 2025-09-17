@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using PWC.Challenge.Application.Dtos;
 using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Application.Services;
@@ -51,32 +51,15 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error accessing cache for key: {CacheKey}, falling back to database", cacheKey);
-                // Continuar con la consulta a la base de datos si el cache falla
+            _logger.LogWarning(ex, "Error accessing cache for key: {CacheKey}, falling back to database", cacheKey);
+                // Continuar con la consulta a la base de datos si el cache falló
             }
 
-            // Si no está en cache o el cache falló, obtener de la base de datos
-            var allCars = await _carRepository.GetAllAsync(cancellationToken: ct);
-            var availableCars = new List<Car>();
-
-            foreach (var car in allCars)
-            {
-                // Aplicar filtros primero (performance)
-                if (!PassesFilters(car, carType, model))
-                    continue;
-
-                // Verificar disponibilidad completa
-                var isAvailable = await _availabilityService.IsCarAvailableAsync(
-                    car.Id, startDate, endDate);
-
-                if (isAvailable)
-                {
-                    availableCars.Add(car);
-                }
-            }
+            // Obtener coches disponibles directamente del repositorio
+            var availableCars = await _carRepository.GetAvailableCarsAsync(startDate, endDate, carType, model, ct);
 
             var result = availableCars
-                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate))
+                .Select(c => new AvailableCarDto(c.Id, c.Type, c.Model, c.DailyRate, c.LicensePlate))
                 .ToList();
 
             try
@@ -108,17 +91,6 @@ namespace PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars
 
             if (startDate < DateOnly.FromDateTime(_clock.UtcNow))
                 throw new ArgumentException("Start date cannot be in the past");
-        }
-
-        private bool PassesFilters(Car car, string? carType, string? model)
-        {
-            if (!string.IsNullOrEmpty(carType) && !car.Type.Equals(carType, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            if (!string.IsNullOrEmpty(model) && !car.Model.Contains(model, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            return car.Status == CarStatus.Available;
         }
     }
 }

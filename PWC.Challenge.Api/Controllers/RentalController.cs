@@ -10,6 +10,7 @@ using PWC.Challenge.Application.Features.Rentals.Commands.CreateRental;
 using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Application.Features.Rentals.Queries.GetRentalById;
+using PWC.Challenge.Application.Features.Rentals.Queries.GetRentals;
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -251,5 +252,4 @@ public class RentalsController(
         _logger.LogInformation("Consulta de todas las reservas completada exitosamente");
         return Ok(response);
     }
-}
 }

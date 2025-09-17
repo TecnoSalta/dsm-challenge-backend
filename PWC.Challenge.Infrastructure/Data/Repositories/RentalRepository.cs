@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Infrastructure.Data.Common;
+using PWC.Challenge.Infrastructure.Data.Extensions;
 
 namespace PWC.Challenge.Infrastructure.Data.Repositories;
 
@@ -10,6 +11,15 @@ public class RentalRepository : BaseRepository<Rental>, IRentalRepository
 {
     public RentalRepository(ApplicationDbContext context) : base(context)
     {
+    }
+
+    public async Task<IEnumerable<Rental>> GetAllWithCustomersAsync(bool asNoTracking = false, CancellationToken cancellationToken = default)
+    {
+        var query = Context.Set<Rental>()
+            .Include(r => r.Customer)
+            .AsNoTrackingIf(asNoTracking);
+
+        return await query.ToListAsync(cancellationToken);
     }
 
     public async Task<bool> HasOverlappingRentalsAsync(Guid carId, DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)

@@ -1,4 +1,4 @@
-﻿using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Domain.Interfaces;
@@ -33,4 +33,5 @@ public interface ICarRepository : IBaseRepository<Car>
         CancellationToken cancellationToken = default);
 
     Task<List<Car>> GetNextCarServicesAsync(int nextDays);
+    Task<IEnumerable<Car>> GetAllWithServicesAsync(bool asNoTracking = false, CancellationToken cancellationToken = default);
 }

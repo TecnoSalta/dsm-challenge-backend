@@ -58,7 +58,7 @@ public class UpdateRentalCommandHandlerTests
 
         var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
-        var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
+        var car = new Car(carId, "Compact", "Mini", 100, "TESTPLATE", CarStatus.Available);
         
         ctx.Cars.Add(WithAudit(car));
         var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -105,7 +105,7 @@ public class UpdateRentalCommandHandlerTests
         var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
-        var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
+        var car = new Car(carId, "Compact", "Mini", 100, "TESTPLATE", CarStatus.Available);
         ctx.Cars.Add(WithAudit(car));
 
         var otherCustomer = new Customer(Guid.NewGuid(), "123456789","Other User", "456 Test Ave", "foo@g.com");
@@ -154,7 +154,7 @@ public class UpdateRentalCommandHandlerTests
 
         var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         customer = WithAudit(customer);
-        var car = new Car(carId, "Compact", "Mini", 100, CarStatus.Available);
+        var car = new Car(carId, "Compact", "Mini", 100, "TESTPLATE", CarStatus.Available);
 
         ctx.Cars.Add(WithAudit(car));
         var rentalEntity = WithAudit(Rental.CreateForTest(rentalId, customer, car,
@@ -201,8 +201,8 @@ public class UpdateRentalCommandHandlerTests
         var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
-        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
-        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, CarStatus.Available);
+        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, (CarStatus.Rented.ToString()));
+        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, CarStatus.Available.ToString());
         ctx.Cars.Add(WithAudit(originalCar));
         ctx.Cars.Add(WithAudit(newCar));
 
@@ -250,8 +250,8 @@ public class UpdateRentalCommandHandlerTests
         var customer = new Customer(Guid.NewGuid(), "123456789", "Test User", "123 Test St", "foo@g.com");
         ctx.Customers.Add(WithAudit(customer));
 
-        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, CarStatus.Rented);
-        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, CarStatus.Available);
+        var originalCar = new Car(Guid.NewGuid(), "Compact", "Mini", 100, (CarStatus.Rented.ToString()));
+        var newCar = new Car(Guid.NewGuid(), "Sedan", "Toyota", 120, (CarStatus.Available.ToString()));
         ctx.Cars.Add(WithAudit(originalCar));
         ctx.Cars.Add(WithAudit(newCar));
 
