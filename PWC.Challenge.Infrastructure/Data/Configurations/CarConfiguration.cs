@@ -25,6 +25,8 @@ namespace PWC.Challenge.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasConversion<string>();
 
+            builder.HasIndex(c => c.LicensePlate).IsUnique(); // Added unique index for LicensePlate
+
             // Configure the collection of Services as owned entities
             builder.OwnsMany(c => c.Services, serviceBuilder =>
             {

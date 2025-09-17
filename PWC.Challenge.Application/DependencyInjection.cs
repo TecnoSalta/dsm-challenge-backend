@@ -8,6 +8,7 @@ using PWC.Challenge.Application.Common;
 using PWC.Challenge.Application.Mappings.Mapster;
 using PWC.Challenge.Domain.Entities;
 using System.Reflection;
+using PWC.Challenge.Application.Services; // Added for ICarService and IRentalService
 
 
 namespace PWC.Challenge.Application;
@@ -31,6 +32,9 @@ public static class DependencyInjection
 
 
         services.AddServices(applicationAssembly);
+
+        services.AddScoped<ICarService, CarService>(); // Register ICarService
+        services.AddScoped<IRentalService, RentalService>(); // Register IRentalService
 
         return services;
     }

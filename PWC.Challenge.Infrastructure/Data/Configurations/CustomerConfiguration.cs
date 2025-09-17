@@ -12,5 +12,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
                .WithOne()
                .HasForeignKey<Customer>(c => c.UserId)
                .IsRequired();
+
+        builder.HasIndex(c => c.Dni).IsUnique(); // Added unique index for Dni
     }
 }

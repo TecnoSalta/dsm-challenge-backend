@@ -121,6 +121,21 @@ public class Car : AggregateRoot
         AddDomainEvent(new CarStatusForcedDomainEvent(Id, previousStatus, CarStatus.Available, reason, DateTime.UtcNow));
     }
 
+    public void AddRental(Rental rental)
+    {
+        if (rental == null)
+            throw new ArgumentNullException(nameof(rental));
+
+        // Ensure the car is available for the rental period, considering the buffer
+        if (!IsAvailableForPeriod(rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate))
+        {
+            throw new OverlappingRentalException(Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate);
+        }
+
+        _rentals.Add(rental);
+        AddDomainEvent(new CarRentalAddedDomainEvent(Id, rental.Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate));
+    }
+
     // ========== MÉTODOS PRIVADOS ==========
 
     private bool HasOverlappingRentals(DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)
@@ -128,12 +143,29 @@ public class Car : AggregateRoot
         return _rentals.Any(r =>
             r.Id != excludedRentalId &&
             (r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved) &&
-            r.RentalPeriod.OverlapsWith(new RentalPeriod(startDate, endDate)));
+            r.RentalPeriod.OverlapsWith(new RentalPeriod(startDate, endDate.AddDays(1)))); // 1-day buffer
     }
 
     public bool IsInServicePeriod(DateOnly startDate, DateOnly endDate)
     {
         return _services.Any(service => service.OverlapsWith(startDate, endDate));
+    }
+
+    public bool IsAvailableForPeriod(DateOnly startDate, DateOnly endDate)
+    {
+        // Check for overlapping services
+        if (IsInServicePeriod(startDate, endDate))
+            return false;
+
+        // Check for overlapping rentals, considering the 1-day buffer
+        if (HasOverlappingRentals(startDate, endDate))
+            return false;
+
+        // Also consider the car's current status if it's not available
+        if (Status != CarStatus.Available)
+            return false;
+
+        return true;
     }
 
     // ========== MÉTODOS DE CONSULTA DE ESTADO ==========

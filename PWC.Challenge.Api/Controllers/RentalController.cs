@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization; 
+using Microsoft.AspNetCore.Authorization;
 using PWC.Challenge.Application.Dtos.Rentals;
 using PWC.Challenge.Application.Features.Rentals.Commands.CompleteRental;
 using PWC.Challenge.Application.Features.Rentals.Commands.CancelRental;
@@ -11,72 +11,91 @@ using PWC.Challenge.Application.Exceptions;
 using PWC.Challenge.Common.Exceptions;
 using PWC.Challenge.Application.Features.Rentals.Queries.GetRentalById;
 using PWC.Challenge.Application.Features.Rentals.Queries.GetRentals;
+using PWC.Challenge.Application.Services;
+using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Domain.Exceptions;
 
 namespace PWC.Challenge.Api.Controllers;
 
-[Authorize] 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class RentalsController(
     ILogger<RentalsController> logger,
-    ISender sender) : ControllerBase
+    ISender sender,
+    IRentalService rentalService) : ControllerBase
 {
     private readonly ILogger<RentalsController> _logger = logger;
     private readonly ISender _sender = sender;
+    private readonly IRentalService _rentalService = rentalService;
 
     /// <summary>
-    /// CU-01 – Registrar una nueva reserva
+    /// Registrar un nuevo alquiler
     /// </summary>
     [Authorize(Roles = "Admin,Customer")]
     [HttpPost]
-    [ProducesResponseType(typeof(CreatedRentalDto), 201)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> CreateRental(
-        [FromBody] CreateRentalDto dto,
+    [ProducesResponseType(typeof(Rental), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RegisterRental(
+        [FromBody] CreateRentalRequestDto request,
         CancellationToken ct)
     {
-        _logger.LogInformation("Iniciando registro de nueva reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+        _logger.LogInformation("Iniciando registro de nuevo alquiler para Cliente ID: {CustomerId}, Carro ID: {CarId}", request.CustomerId, request.CarId);
 
         try
         {
-            var command = new CreateRentalCommand(dto.CustomerId, dto.CarId, dto.StartDate, dto.EndDate);
-            var response = await _sender.Send(command, ct);
+            var rental = await _rentalService.RegisterRentalAsync(request);
 
-            _logger.LogInformation("Reserva con ID: {RentalId} registrada exitosamente", response.Id);
-            // Aquí está el fix: se usa nameof(GetRentalById) en lugar del string "created"
+            _logger.LogInformation("Alquiler con ID: {RentalId} registrado exitosamente", rental.Id);
             return CreatedAtAction(
                 nameof(GetRentalById),
-                new { id = response.Id },
-                response
+                new { id = rental.Id },
+                rental
             );
+
         }
         catch (ValidationException ex)
         {
-            _logger.LogWarning(ex, "Error de validación al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            _logger.LogWarning(ex, "Error de validación al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", request.CustomerId, request.CarId);
             return BadRequest(ex.Message);
         }
         catch (NotFoundException ex)
         {
-            _logger.LogWarning(ex, "Recurso no encontrado al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            _logger.LogWarning(ex, "Recurso no encontrado al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", request.CustomerId, request.CarId);
             return NotFound(ex.Message);
         }
         catch (BusinessException ex)
         {
-            _logger.LogWarning(ex, "Regla de negocio violada al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
+            _logger.LogWarning(ex, "Regla de negocio violada al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", request.CustomerId, request.CarId);
+            return BadRequest(ex.Message);
+        }
+        catch (CarNotAvailableException ex)
+        {
+            _logger.LogWarning(ex, "Auto no disponible para el alquiler: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (OverlappingRentalException ex)
+        {
+            _logger.LogWarning(ex, "Período de alquiler se solapa: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (ArgumentNullException ex)
+        {
+            _logger.LogWarning(ex, "Argumento nulo al registrar alquiler: {Message}", ex.Message);
             return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al registrar reserva para Cliente ID: {CustomerId}, Carro ID: {CarId}", dto.CustomerId, dto.CarId);
-            return StatusCode(500, "Error interno del servidor");
+            _logger.LogError(ex, "Error inesperado al registrar alquiler: {Message}", ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Error interno del servidor");
         }
     }
 
     /// <summary>
     /// CU-04 – Modificar reserva activa
     /// </summary>
-    [Authorize(Roles = "Admin,Customer")] // Added
+    [Authorize(Roles = "Admin,Customer")]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(UpdatedRentalDto), 200)]
     [ProducesResponseType(400)]
@@ -94,7 +113,7 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} actualizada exitosamente", id);
-           
+
             return Ok(response);
         }
         catch (ValidationException ex)
@@ -122,7 +141,7 @@ public class RentalsController(
     /// <summary>
     /// CU-05 – Cancelar reserva activa
     /// </summary>
-    [Authorize(Roles = "Admin,Customer")] // Added
+    [Authorize(Roles = "Admin,Customer")]
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
@@ -166,7 +185,7 @@ public class RentalsController(
     /// <summary>
     /// CU-06 – Completar una reserva activa
     /// </summary>
-    [Authorize(Roles = "Admin,Customer")] // Added
+    [Authorize(Roles = "Admin,Customer")]
     [HttpPost("{id}/complete")]
     [ProducesResponseType(typeof(CompletedRentalDto), 200)]
     [ProducesResponseType(400)]
@@ -184,7 +203,7 @@ public class RentalsController(
             var response = await _sender.Send(command, ct);
 
             _logger.LogInformation("Reserva con ID: {RentalId} completada exitosamente", id);
-            return Created(string.Empty, response);
+            return Ok(response); // Cambiado de Created a Ok ya que no se está creando un nuevo recurso
         }
         catch (ValidationException ex)
         {
@@ -240,7 +259,7 @@ public class RentalsController(
     /// CU-XX – Obtener todas las reservas
     /// </summary>
     [Authorize(Roles = "Admin,Customer")]
-    [HttpGet] // This will map to /api/Rentals
+    [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<RentalDto>), 200)]
     public async Task<IActionResult> GetRentals(CancellationToken ct)
     {
