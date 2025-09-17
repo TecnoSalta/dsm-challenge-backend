@@ -46,6 +46,19 @@ public class CarRepository : BaseRepository<Car>, ICarRepository
         throw new NotImplementedException();
     }
 
+    public async Task<List<Car>> GetNextCarServicesAsync(int nextDays)
+    {
+        var now = DateTime.Now;
+        var startDate = DateOnly.FromDateTime(now);
+        var endDate = DateOnly.FromDateTime(now.AddDays(nextDays));
+
+        return await Context.Cars
+            .Include(c => c.Services)
+            .Where(c => c.Services.Any(s => s.Date >= startDate && s.Date <= endDate))
+            .OrderBy(c => c.Services.Min(s => s.Date))
+            .ToListAsync();
+    }
+
     public async Task<bool> IsCarAvailableAsync(
         Guid carId,
         DateOnly startDate,

@@ -162,6 +162,8 @@ public static class DependencyInjection
         // Register Current User Service
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
+        services.AddScoped<IStatisticService, StatisticService>();
+
         return services;
     }
 }

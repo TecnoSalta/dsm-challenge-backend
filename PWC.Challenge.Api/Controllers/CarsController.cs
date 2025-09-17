@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PWC.Challenge.Application.Features.Cars.Queries.GetCarMetadata;
+using PWC.Challenge.Application.Features.Cars.Queries.GetNextCarServices;
+using PWC.Challenge.Domain.Entities;
 
 namespace PWC.Challenge.Api.Controllers;
 
@@ -21,5 +23,13 @@ public class CarsController : ControllerBase
     {
         var metadata = await _mediator.Send(new GetCarMetadataQuery());
         return Ok(metadata);
+    }
+
+    [HttpGet("NextCarServices")]
+    [ProducesResponseType(typeof(IReadOnlyList<Car>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetNextCarServices()
+    {
+        var results = await _mediator.Send(new GetNextCarServicesQuery());
+        return Ok(results);
     }
 }

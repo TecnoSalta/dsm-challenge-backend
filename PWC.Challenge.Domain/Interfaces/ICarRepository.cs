@@ -31,4 +31,6 @@ public interface ICarRepository : IBaseRepository<Car>
         DateOnly endDate,
         Guid? excludedRentalId = null,
         CancellationToken cancellationToken = default);
+
+    Task<List<Car>> GetNextCarServicesAsync(int nextDays);
 }
