@@ -1,5 +1,10 @@
 # PWC.Challenge
 
+Motor DB PostgresSQL version 10 (Dockerizado) 
+Creacion de PWChallenge (Db)
+Correr las migraciones de update database y luego
+ejecutar /docs/create-sample-car-services.sql usando cliente sql (Dbeaver)
+
 ## ✅ Testing & Coverage
 
 Ejecutar los tests con cobertura de código:
