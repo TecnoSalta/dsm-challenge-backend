@@ -234,4 +234,22 @@ public class RentalsController(
             return StatusCode(500, "Error interno del servidor");
         }
     }
+
+    /// <summary>
+    /// CU-XX – Obtener todas las reservas
+    /// </summary>
+    [Authorize(Roles = "Admin,Customer")]
+    [HttpGet] // This will map to /api/Rentals
+    [ProducesResponseType(typeof(IReadOnlyList<RentalDto>), 200)]
+    public async Task<IActionResult> GetRentals(CancellationToken ct)
+    {
+        _logger.LogInformation("Iniciando consulta de todas las reservas");
+
+        var query = new GetRentalsQuery();
+        var response = await _sender.Send(query, ct);
+
+        _logger.LogInformation("Consulta de todas las reservas completada exitosamente");
+        return Ok(response);
+    }
+}
 }

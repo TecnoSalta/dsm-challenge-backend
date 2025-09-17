@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PWC.Challenge.Domain.Entities;
 using PWC.Challenge.Infrastructure.Data;
+using PWC.Challenge.Api.Middleware;
 
 
 internal class Program
@@ -99,6 +100,8 @@ internal class Program
 
 
         var app = builder.Build();
+
+        app.UseMiddleware<DomainExceptionMiddleware>();
 
         // Configure the HTTP request pipeline.
 

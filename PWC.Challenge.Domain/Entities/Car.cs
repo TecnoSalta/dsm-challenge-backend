@@ -1,5 +1,6 @@
-﻿﻿using PWC.Challenge.Domain.Common;
+using PWC.Challenge.Domain.Common;
 using PWC.Challenge.Domain.Enums;
+using PWC.Challenge.Domain.Exceptions;
 
 namespace PWC.Challenge.Domain.Entities;
 
@@ -23,8 +24,8 @@ public class Car : AggregateRoot
     public Car(Guid id, string type, string model, decimal dailyRate, CarStatus status = CarStatus.Available)
     {
         Id = id;
-        Type = type ?? throw new ArgumentNullException(nameof(type));
-        Model = model ?? throw new ArgumentNullException(nameof(model));
+        Type = string.IsNullOrWhiteSpace(type) ? throw new InvalidCarArgumentException(nameof(type)) : type;
+        Model = string.IsNullOrWhiteSpace(model) ? throw new InvalidCarArgumentException(nameof(model)) : model;
         DailyRate = dailyRate;
         Status = status;
     }
@@ -38,7 +39,7 @@ public class Car : AggregateRoot
     public void ScheduleService(DateOnly date, int durationDays = 2)
     {
         if (_services.Any(s => s.OverlapsWith(date, date.AddDays(durationDays))))
-            throw new InvalidOperationException("Service overlaps with existing service.");
+            throw new OverlappingServiceException();
 
         _services.Add(new Service(date, durationDays));
     }
@@ -46,13 +47,13 @@ public class Car : AggregateRoot
     public void AddRental(Rental rental)
     {
         if (rental == null) throw new ArgumentNullException(nameof(rental));
-        if (rental.CarId != Id) throw new InvalidOperationException("Rental does not belong to this car");
+        if (rental.CarId != Id) throw new RentalCarMismatchException();
 
         // Un agregado raíz debe proteger sus invariantes.
         // Un coche no puede tener múltiples alquileres activos que se solapen.
         if (rental.Status == RentalStatus.Active && _rentals.Any(r => r.Id != rental.Id && r.Status == RentalStatus.Active && r.RentalPeriod.OverlapsWith(rental.RentalPeriod)))
         {
-            throw new InvalidOperationException("El coche ya tiene un alquiler activo que se solapa en el período especificado.");
+            throw new OverlappingRentalException();
         }
 
         _rentals.Add(rental);
@@ -61,7 +62,7 @@ public class Car : AggregateRoot
     public void MarkAsRented()
     {
         if (Status != CarStatus.Available)
-            throw new InvalidOperationException("Car is not available to rent.");
+            throw new CarNotAvailableException(Id);
 
         Status = CarStatus.Rented;
     }
@@ -75,7 +76,7 @@ public class Car : AggregateRoot
     public void MarkAsInMaintenance()
     {
         if (Status == CarStatus.Rented)
-            throw new InvalidOperationException("Cannot mark a rented car as in maintenance.");
+            throw new CarRentedCannotBeInMaintenanceException();
 
         Status = CarStatus.InMaintenance;
     }

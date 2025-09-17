@@ -17,7 +17,9 @@ public class AvailabilityController(
     /// Consultar coches disponibles para un rango de fechas
     /// </summary>
     [HttpGet("disponibilidad")]
-    [ProducesResponseType(typeof(IReadOnlyList<AvailableCarDto>), 200)]
+    [ProducesResponseType(typeof(IReadOnlyList<AvailableCarDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAvailableCars(
         [FromQuery] AvailabilityQueryDto filter,
         CancellationToken ct)
