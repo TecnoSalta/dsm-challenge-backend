@@ -34,7 +34,7 @@ El reporte quedará en **`./CoverHtmlV2/index.html`** y se puede abrir en cualqu
   ```powershell
   Remove-Migration -StartupProject PWC.Challenge.Api -Project PWC.Challenge.Infrastructure -Context ApplicationDbContext
   ```
-
+DOCKER--> Usar Docker Compose para levantar el proyecto debe estar instalado Docker Desktop.
 ---
 
 ## 🏗️ Project structure (Clean Architecture + DDD)
