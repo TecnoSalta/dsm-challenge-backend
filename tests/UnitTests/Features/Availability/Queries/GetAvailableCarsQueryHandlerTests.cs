@@ -5,6 +5,7 @@ using PWC.Challenge.Application.Features.Cars.Queries.GetAvailableCars;
 using PWC.Challenge.Application.Interfaces;
 using PWC.Challenge.Application.Services;
 using PWC.Challenge.Domain.Entities;
+using PWC.Challenge.Domain.Enums;
 using PWC.Challenge.Domain.Interfaces;
 using PWC.Challenge.Domain.Services;
 
@@ -61,12 +62,8 @@ namespace UnitTests.Features.Availability.Queries
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null); // Cache miss
 
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cars);
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -74,9 +71,6 @@ namespace UnitTests.Features.Availability.Queries
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
-            _availabilityServiceMock.Verify(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()),
-                Times.Exactly(2));
 
             _cacheServiceMock.Verify(c => c.SetAsync(
                 It.IsAny<string>(),
@@ -113,7 +107,7 @@ namespace UnitTests.Features.Availability.Queries
             Assert.Equal(cachedCars, result);
 
             // Verify that repository and availability service were not called
-            _carRepositoryMock.Verify(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+            _carRepositoryMock.Verify(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
             _availabilityServiceMock.Verify(service =>
                 service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()),
                 Times.Never);
@@ -145,13 +139,10 @@ namespace UnitTests.Features.Availability.Queries
                 .Setup(c => c.GetAsync<IReadOnlyList<AvailableCarDto>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null);
 
+            // Simulate repository returning only SUVs
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(cars);
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), "SUV", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cars.Where(c => c.Type == "SUV").ToList());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -181,13 +172,10 @@ namespace UnitTests.Features.Availability.Queries
                 .Setup(c => c.GetAsync<IReadOnlyList<AvailableCarDto>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null);
 
+            // Simulate repository returning only Camry
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(cars);
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), "Camry", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cars.Where(c => c.Model == "Toyota Camry").ToList());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -195,7 +183,7 @@ namespace UnitTests.Features.Availability.Queries
             // Assert
             Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal("Toyota Camry", result.First().Model);
+            Assert.Equal("Toyota Camry", result[0].Model);
         }
 
         [Fact]
@@ -216,14 +204,10 @@ namespace UnitTests.Features.Availability.Queries
                 .Setup(c => c.GetAsync<IReadOnlyList<AvailableCarDto>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null);
 
+            // Simulate repository returning only the available car
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(cars);
-
-            _availabilityServiceMock.SetupSequence(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true)   // First car available
-                .ReturnsAsync(false); // Second car unavailable due to service
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cars.Take(1).ToList()); // Only return the first car as available
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -273,12 +257,8 @@ namespace UnitTests.Features.Availability.Queries
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null);
 
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Car> { new Car(Guid.NewGuid(), "SUV", "CR-V", 70m,"TESTPLATE1") });
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
 
             // Act & Assert for each query
             await _handler.Handle(query1, CancellationToken.None);
@@ -316,12 +296,8 @@ namespace UnitTests.Features.Availability.Queries
                 .ThrowsAsync(new Exception("Cache error"));
 
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cars);
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(It.IsAny<Guid>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -339,7 +315,7 @@ namespace UnitTests.Features.Availability.Queries
                 Times.Once);
 
             // Verify que se llamó al repositorio como fallback
-            _carRepositoryMock.Verify(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+            _carRepositoryMock.Verify(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         [Fact]
         public async Task Handle_ShouldExcludeCarsInMaintenance()
@@ -359,13 +335,10 @@ namespace UnitTests.Features.Availability.Queries
                 .Setup(c => c.GetAsync<IReadOnlyList<AvailableCarDto>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((IReadOnlyList<AvailableCarDto>)null);
 
+            // Simulate repository returning only the available car (not in maintenance)
             _carRepositoryMock
-                .Setup(repo => repo.GetAllAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(cars);
-
-            _availabilityServiceMock.Setup(service =>
-                service.IsCarAvailableAsync(availableCar.Id, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()))
-                .ReturnsAsync(true);
+                .Setup(repo => repo.GetAvailableCarsAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cars.Where(c => c.Status != CarStatus.InMaintenance).ToList());
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -374,11 +347,6 @@ namespace UnitTests.Features.Availability.Queries
             Assert.NotNull(result);
             Assert.Single(result);
             Assert.Equal("Toyota Camry", result.First().Model);
-
-            // Verify que el carro en mantenimiento ni siquiera se verificó su disponibilidad
-            _availabilityServiceMock.Verify(service =>
-                service.IsCarAvailableAsync(maintenanceCar.Id, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<Guid?>()),
-                Times.Never);
         }
     }
 }

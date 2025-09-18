@@ -142,7 +142,7 @@ public class Car : AggregateRoot
             throw new ArgumentNullException(nameof(rental));
 
         // Ensure the car is available for the rental period, considering the buffer
-        if (!IsAvailableForPeriod(rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate))
+        if (!IsAvailableForPeriod(rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate, rental.Id))
         {
             throw new OverlappingRentalException(Id, rental.RentalPeriod.StartDate, rental.RentalPeriod.EndDate);
         }
@@ -174,14 +174,14 @@ public class Car : AggregateRoot
         return _services.Any(service => service.OverlapsWith(startDate, endDate));
     }
 
-    public bool IsAvailableForPeriod(DateOnly startDate, DateOnly endDate)
+    public bool IsAvailableForPeriod(DateOnly startDate, DateOnly endDate, Guid? excludedRentalId = null)
     {
         // Check for overlapping services
         if (IsInServicePeriod(startDate, endDate))
             return false;
 
         // Check for overlapping rentals, considering the 1-day buffer
-        if (HasOverlappingRentals(startDate, endDate))
+        if (HasOverlappingRentals(startDate, endDate, excludedRentalId))
             return false;
 
         // Also consider the car's current status if it's not available
